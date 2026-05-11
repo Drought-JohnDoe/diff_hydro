@@ -1,0 +1,6 @@
+comparison,available_local,note
+ET vs MODIS/GLEAM,False,No MODIS or GLEAM files found locally
+soil moisture vs SMAP/ESA-CCI,False,No SMAP or ESA-CCI files found locally
+snowpack vs SNODAS/SNOTEL,False,No SNODAS or SNOTEL files found locally
+groundwater storage vs GRACE,False,No GRACE files found locally
+baseflow index vs observed baseflow separation,True,Compared against Lyne-Hollick separation of observed Q
