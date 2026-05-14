@@ -1,0 +1,11 @@
+Model Five Ep10 median NSE: 0.6906
+HBV Ep10 median NSE: 0.6278
+Model Five wins on NSE in 497 / 671 basins
+Median Model Five KGE: 0.7240
+Median Model Five logNSE: 0.5413
+Median Model Five lowflow NSE: -15.0705
+Median Model Five highflow NSE: 0.5936
+Median Model Five FDC error: 0.4603
+Median Model Five BFI error: 0.1183
+Median Model Five ET/P: 0.4624
+Median Model Five Q/P: 0.3662
