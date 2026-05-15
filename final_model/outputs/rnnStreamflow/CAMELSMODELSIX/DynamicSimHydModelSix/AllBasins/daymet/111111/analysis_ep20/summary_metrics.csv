@@ -1,0 +1,2 @@
+median_NSE,median_KGE,median_logNSE,median_lowflow_NSE,median_highflow_NSE,median_fdc_error,median_BFI_error,median_ET_ratio,median_runoff_ratio,median_water_balance_closure
+0.6907258927822113,0.7254901005475215,0.5769586265087128,-11.529091358184814,0.5899609327316284,0.42306217212907,0.11455744504928589,0.40065711736679077,0.35308191180229187,-58875.21875

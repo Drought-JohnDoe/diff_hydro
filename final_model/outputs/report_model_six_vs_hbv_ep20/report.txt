@@ -1,0 +1,11 @@
+Model Six Ep20 median NSE: 0.6907
+HBV Ep10 median NSE: 0.6278
+Model Six wins on NSE in 514 / 671 basins
+Median Model Six KGE: 0.7255
+Median Model Six logNSE: 0.5770
+Median Model Six lowflow NSE: -11.5291
+Median Model Six highflow NSE: 0.5900
+Median Model Six FDC error: 0.4231
+Median Model Six BFI error: 0.1146
+Median Model Six ET/P: 0.4007
+Median Model Six Q/P: 0.3531

@@ -1,0 +1,63 @@
+/home/mircore/Desktop/diff_hydro/code/dPLHBVrelease/hydroDL-dev/example/model_six/../../hydroDL/data/camels.py:522: RuntimeWarning: invalid value encountered in cast
+  ind = np.full(len(self.usgsId), np.nan).astype(int)
+/home/mircore/Desktop/diff_hydro/code/dPLHBVrelease/hydroDL-dev/example/model_six/../../hydroDL/data/camels.py:522: RuntimeWarning: invalid value encountered in cast
+  ind = np.full(len(self.usgsId), np.nan).astype(int)
+/home/mircore/Desktop/diff_hydro/code/dPLHBVrelease/hydroDL-dev/example/model_six/../../hydroDL/data/camels.py:174: RuntimeWarning: invalid value encountered in cast
+  indGrid = np.full(usgsIdLst.size, np.nan).astype(int)
+/home/mircore/Desktop/diff_hydro/code/dPLHBVrelease/hydroDL-dev/example/model_six/../../hydroDL/model/rnn.py:321: UserWarning: RNN module weights are not part of single contiguous chunk of memory. This means they need to be compacted at every call, possibly greatly increasing memory usage. To compact weights again call flatten_parameters(). (Triggered internally at /opt/conda/conda-bld/pytorch_1682343970094/work/aten/src/ATen/native/cudnn/RNN.cpp:982.)
+  output, hy, cy, reserve, new_weight_buf = torch._cudnn_rnn(
+
+loading package hydroDL
+daymet tmean was used!
+read usgs streamflow 7.833831787109375
+read usgs streamflow 7.848365068435669
+read usgs streamflow 7.495294809341431
+daymet tmean was used!
+read usgs streamflow 7.366809129714966
+read usgs streamflow 7.398543119430542
+Iter 0 of 200: Loss 1.315
+Iter 100 of 200: Loss 1.479
+Epoch 6 Loss 1.398 time 1147.42
+Iter 0 of 200: Loss 1.456
+Iter 100 of 200: Loss 1.238
+Epoch 7 Loss 1.377 time 1146.73
+Iter 0 of 200: Loss 1.426
+Iter 100 of 200: Loss 1.354
+Epoch 8 Loss 1.370 time 1138.61
+Iter 0 of 200: Loss 2.002
+Iter 100 of 200: Loss 1.260
+Epoch 9 Loss 1.363 time 1227.97
+Iter 0 of 200: Loss 1.241
+Iter 100 of 200: Loss 1.361
+Epoch 10 Loss 1.386 time 1149.69
+Iter 0 of 200: Loss 1.389
+Iter 100 of 200: Loss 1.394
+Epoch 11 Loss 1.281 time 1149.79
+Iter 0 of 200: Loss 1.473
+Iter 100 of 200: Loss 1.043
+Epoch 12 Loss 1.290 time 1210.45
+Iter 0 of 200: Loss 1.139
+Iter 100 of 200: Loss 1.337
+Epoch 13 Loss 1.263 time 1148.22
+Iter 0 of 200: Loss 0.895
+Iter 100 of 200: Loss 1.267
+Epoch 14 Loss 1.229 time 1137.56
+Iter 0 of 200: Loss 1.500
+Iter 100 of 200: Loss 1.668
+Epoch 15 Loss 1.246 time 1144.26
+Iter 0 of 200: Loss 1.061
+Iter 100 of 200: Loss 1.006
+Epoch 16 Loss 1.226 time 1151.37
+Iter 0 of 200: Loss 1.040
+Iter 100 of 200: Loss 0.977
+Epoch 17 Loss 1.201 time 1147.08
+Iter 0 of 200: Loss 1.066
+Iter 100 of 200: Loss 1.521
+Epoch 18 Loss 1.204 time 1137.08
+Iter 0 of 200: Loss 1.527
+Iter 100 of 200: Loss 1.554
+Epoch 19 Loss 1.204 time 1144.21
+Iter 0 of 200: Loss 1.711
+Iter 100 of 200: Loss 0.823
+Epoch 20 Loss 1.215 time 1154.62
+
