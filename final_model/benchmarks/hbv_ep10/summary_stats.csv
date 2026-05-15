@@ -1,0 +1,2 @@
+n_basins,median_test_nse,mean_test_nse,nse_lt_0,nse_ge_0_5,nse_ge_0_65,nse_ge_0_8
+671,0.6278148701696469,0.3387203266692386,66,453,308,59

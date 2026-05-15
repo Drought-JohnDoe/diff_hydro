@@ -27,8 +27,16 @@ It intentionally does **not** include:
   Saved Model 6 checkpoints and run metadata.
 - `outputs/report_model_six_vs_hbv_ep20/`
   Saved Ep20 comparison figures and tables versus the HBV benchmark.
+- `benchmarks/hbv_ep10/`
+  Saved HBV10 benchmark evaluation and summary plots used for comparison.
 - `report_model_six_vs_hbv.py`
   Report generator for Model 6 versus HBV.
+- `run_model6.py`
+  Small config-driven runner for train/resume/test/analyze/report/NSE checks.
+- `configs/`
+  Ready-to-edit JSON configs.
+- `notebooks/model6_runner.ipynb`
+  Minimal notebook workflow for resuming and reevaluating the model.
 
 ## Final Model
 
@@ -58,6 +66,9 @@ Saved analysis:
 Saved HBV comparison:
 
 - `outputs/report_model_six_vs_hbv_ep20/`
+- local HBV benchmark:
+  - `benchmarks/hbv_ep10/Eva10.npy`
+  - `benchmarks/hbv_ep10/summary_stats.csv`
 
 ## Reported Ep20 Result
 
@@ -155,7 +166,8 @@ conda run -n pytorch python report_model_six_vs_hbv.py \
   --result-suffix Train19801001_19951001Test19951001_20101001_ModelSixAll671_BS32_HS64_MaxIter200 \
   --analysis-dir outputs/rnnStreamflow/CAMELSMODELSIX/DynamicSimHydModelSix/AllBasins/daymet/111111/analysis_ep20 \
   --out-dir outputs/report_model_six_vs_hbv_ep20 \
-  --subset-tag AllBasins
+  --subset-tag AllBasins \
+  --hbv-eva-path benchmarks/hbv_ep10/Eva10.npy
 ```
 
 ## Notes
@@ -163,3 +175,60 @@ conda run -n pytorch python report_model_six_vs_hbv.py \
 - The scripts now use `example/model_six/Sub531ID.txt` as the default subset file location.
 - The report script now derives its root from its own file location, so it can run from this clean package directly.
 - This package is intended to be the single Model 6 starting point for future development.
+
+## Configurable Runner
+
+The easiest way to rerun experiments is with:
+
+```bash
+python run_model6.py <action> --config configs/model6_resume_ep20_to25.json
+```
+
+Available actions:
+
+- `train`
+- `resume`
+- `test`
+- `analyze`
+- `report`
+- `nse`
+
+### Resume Ep20 to Ep25
+
+Default config:
+
+- `configs/model6_resume_ep20_to25.json`
+
+This is already set up for:
+
+- `start_epoch = 20`
+- `end_epoch = 25`
+- `epoch = 25`
+
+Example:
+
+```bash
+python run_model6.py resume --config configs/model6_resume_ep20_to25.json
+python run_model6.py test --config configs/model6_resume_ep20_to25.json
+python run_model6.py analyze --config configs/model6_resume_ep20_to25.json
+python run_model6.py report --config configs/model6_resume_ep20_to25.json
+python run_model6.py nse --config configs/model6_resume_ep20_to25.json
+```
+
+### Change Hyperparameters
+
+Edit the JSON before rerunning. Good first knobs to explore:
+
+- `max_iter_ep`
+- `batch_size`
+- `reg_amp_w`
+- `reg_smooth_w`
+- `reg_part_w`
+
+For safe checkpoint resume, do not change architecture-defining fields like:
+
+- `hidden_size`
+- `nmul`
+- dynamic/static model structure flags
+
+unless you intend to start fresh training instead of continuing from `Ep20`.
