@@ -28,6 +28,10 @@ If you prefer one-off commands, replace `python` with:
   - summary and per-basin metrics
   - CONUS parameter maps
   - basin-scale flux and diagnostic maps
+  - `comparison_vs_hbv/` with:
+    - Model 6 epoch-30 spatial NSE plots
+    - NSE histogram comparing Model 6 epoch 30 against HBV epoch 10
+    - NSE bin-count table for Model 6 vs HBV
 - `results/representative_basins/`
   - one poor, one moderate, and one very good basin with metrics and streamflow plots
 - `benchmarks/hbv_ep10/`
