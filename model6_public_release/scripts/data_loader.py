@@ -118,10 +118,13 @@ def build_demo_dataset(
     }
 
 
-def build_demo_eval_inputs(dataset: dict):
-    bufftime = int(dataset["bufftime"])
-    x_buff = dataset["x_train"][:, -bufftime:, :]
-    z_buff = dataset["z_train"][:, -bufftime:, :]
+def build_demo_eval_inputs(dataset: dict, use_full_train_warmup=True):
+    if use_full_train_warmup:
+        warm_len = dataset["x_train"].shape[1]
+    else:
+        warm_len = int(dataset["bufftime"])
+    x_buff = dataset["x_train"][:, -warm_len:, :]
+    z_buff = dataset["z_train"][:, -warm_len:, :]
     x_eval = np.concatenate([x_buff, dataset["x_test"]], axis=1)
     z_series = np.concatenate([z_buff, dataset["z_test"]], axis=1)
     c_rep = np.repeat(dataset["attrs"][:, None, :], z_series.shape[1], axis=1)

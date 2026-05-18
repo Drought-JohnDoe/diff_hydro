@@ -71,12 +71,20 @@ def trainModel(model,
                                rnn.MultiInv_HBVModel, rnn.MultiInv_HBVTDModel, rnn.MultiInv_SIMHYDModel,
                                rnn.MultiInv_SnowSIMHYDModel, rnn.MultiInv_SnowSIMHYDMulTDModel,
                                rnn.MultiInv_SnowSIMHYDMulTDHeterModel, rnn.MultiInv_DynamicSimHydModel,
-                               rnn.MultiInv_DynamicSimHydModelFive]:
+                               rnn.MultiInv_DynamicSimHydModelFive, rnn.MultiInv_DynamicSimHydModelSix,
+                               rnn.MultiInv_DynamicSimHydModelLowNSE_AridPulse,
+                               rnn.MultiInv_DynamicSimHydModelLowNSE_AridSlowGW,
+                               rnn.MultiInv_DynamicSimHydModelSeven,
+                               rnn.MultiInv_DynamicSimHydModelSixRoutingOnly]:
                 iGrid, iT = randomIndex(ngrid, nt, [batchSize, rho], bufftime=bufftime)
                 if type(model) in [rnn.MultiInv_HBVModel, rnn.MultiInv_HBVTDModel, rnn.MultiInv_SIMHYDModel,
                                    rnn.MultiInv_SnowSIMHYDModel, rnn.MultiInv_SnowSIMHYDMulTDModel,
                                    rnn.MultiInv_SnowSIMHYDMulTDHeterModel, rnn.MultiInv_DynamicSimHydModel,
-                                   rnn.MultiInv_DynamicSimHydModelFive]:
+                                   rnn.MultiInv_DynamicSimHydModelFive, rnn.MultiInv_DynamicSimHydModelSix,
+                                   rnn.MultiInv_DynamicSimHydModelLowNSE_AridPulse,
+                                   rnn.MultiInv_DynamicSimHydModelLowNSE_AridSlowGW,
+                                   rnn.MultiInv_DynamicSimHydModelSeven,
+                                   rnn.MultiInv_DynamicSimHydModelSixRoutingOnly]:
                     xTrain = selectSubset(x, iGrid, iT, rho, bufftime=bufftime)
                 else:
                     xTrain = selectSubset(x, iGrid, iT, rho, c=c)
@@ -89,7 +97,11 @@ def trainModel(model,
                 elif type(model) in [rnn.MultiInv_HBVModel, rnn.MultiInv_SIMHYDModel,
                                      rnn.MultiInv_SnowSIMHYDModel, rnn.MultiInv_SnowSIMHYDMulTDModel,
                                      rnn.MultiInv_SnowSIMHYDMulTDHeterModel, rnn.MultiInv_DynamicSimHydModel,
-                                     rnn.MultiInv_DynamicSimHydModelFive]:
+                                     rnn.MultiInv_DynamicSimHydModelFive, rnn.MultiInv_DynamicSimHydModelSix,
+                                     rnn.MultiInv_DynamicSimHydModelLowNSE_AridPulse,
+                                     rnn.MultiInv_DynamicSimHydModelLowNSE_AridSlowGW,
+                                     rnn.MultiInv_DynamicSimHydModelSeven,
+                                     rnn.MultiInv_DynamicSimHydModelSixRoutingOnly]:
                     zTrain = selectSubset(z, iGrid, iT, rho, c=c)
                 elif type(model) in [rnn.MultiInv_HBVTDModel]:
                     zTrain = selectSubset(z, iGrid, iT, rho, c=c, bufftime=bufftime)

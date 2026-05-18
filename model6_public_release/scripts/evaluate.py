@@ -9,6 +9,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import torch
+import tempfile
 import matplotlib
 
 matplotlib.use("Agg")
@@ -18,6 +19,7 @@ from data_loader import build_demo_dataset, build_demo_eval_inputs
 from model import ensure_hydrodl_on_path, release_root
 
 ensure_hydrodl_on_path()
+from hydroDL.model import train as train_mod  # noqa: E402
 
 
 def _run(cmd, cwd=None, env=None):
@@ -48,18 +50,32 @@ def evaluate_demo(args):
     plots_dir = out_dir / "plots"
     plots_dir.mkdir(parents=True, exist_ok=True)
 
-    dataset = build_demo_dataset(demo_root, bufftime=args.bufftime)
-    x_eval, z_eval, y_test = build_demo_eval_inputs(dataset)
+    dataset = build_demo_dataset(
+        demo_root,
+        train_start=args.train_start,
+        train_end=args.train_end,
+        test_start=args.test_start,
+        test_end=args.test_end,
+        bufftime=args.bufftime,
+    )
+    x_eval, z_eval, y_test = build_demo_eval_inputs(dataset, use_full_train_warmup=True)
     device = torch.device(f"cuda:{args.gpu_id}" if torch.cuda.is_available() and not args.cpu else "cpu")
     model = torch.load(args.checkpoint, map_location=device)
     model = model.to(device)
     model.eval()
+    model.inittime = dataset["x_train"].shape[1]
 
-    with torch.no_grad():
-        x_t = torch.from_numpy(np.swapaxes(x_eval, 1, 0)).float().to(device)
-        z_t = torch.from_numpy(np.swapaxes(z_eval, 1, 0)).float().to(device)
-        pred = model(x_t, z_t).detach().cpu().numpy()
-    pred = np.swapaxes(pred, 0, 1)[:, :, 0]
+    with tempfile.TemporaryDirectory() as tmpdir:
+        pred_path = Path(tmpdir) / "demo_q.csv"
+        train_mod.testModel(
+            model,
+            (x_eval, z_eval),
+            c=None,
+            batchSize=len(dataset["basin_ids"]),
+            filePathLst=[str(pred_path)],
+        )
+        pred = pd.read_csv(pred_path, dtype=float, header=None).values
+    pred = pred.reshape(len(dataset["basin_ids"]), y_test.shape[1], 1)[:, :, 0]
     obs = y_test[:, :, 0]
 
     rows = []
@@ -146,6 +162,10 @@ def parse_args():
     pdemo.add_argument("--bufftime", type=int, default=365)
     pdemo.add_argument("--gpu-id", type=int, default=0)
     pdemo.add_argument("--cpu", action="store_true")
+    pdemo.add_argument("--train-start", default="1980-10-01")
+    pdemo.add_argument("--train-end", default="1983-10-01")
+    pdemo.add_argument("--test-start", default="1983-10-01")
+    pdemo.add_argument("--test-end", default="1984-10-01")
 
     pfull = sub.add_parser("full671", help="Run the original full 671-basin test or analysis script")
     pfull.add_argument("action", choices=["test", "analyze"])

@@ -8,6 +8,7 @@ from . import cnn
 import csv
 import numpy as np
 import random
+import warnings
 
 
 class LSTMcell_untied(torch.nn.Module):
@@ -370,6 +371,61 @@ class CudnnLstmModel(torch.nn.Module):
         # outLSTMdr = self.drtest(outLSTM)
         out = self.linearOut(outLSTM)
         return out
+
+
+class SafeLstmModel(torch.nn.Module):
+    """
+    Runtime-safe LSTM wrapper used for dynamic parameter heads.
+
+    This keeps the same high-level structure as ``CudnnLstmModel``
+    (linearIn -> LSTM -> linearOut) but relies on standard PyTorch
+    ``nn.LSTM`` instead of the legacy CUDA-only ``_cudnn_rnn`` path.
+    """
+
+    def __init__(self, *, nx, ny, hiddenSize, dr=0.5):
+        super(SafeLstmModel, self).__init__()
+        self.nx = nx
+        self.ny = ny
+        self.hiddenSize = hiddenSize
+        self.dr = dr
+        self.linearIn = torch.nn.Linear(nx, hiddenSize)
+        self.lstm = torch.nn.LSTM(
+            input_size=hiddenSize,
+            hidden_size=hiddenSize,
+            num_layers=1,
+            dropout=0.0)
+        self.linearOut = torch.nn.Linear(hiddenSize, ny)
+        self._force_cpu_fallback = False
+
+    def _forward_impl(self, x, doDropMC=False, dropoutFalse=False):
+        x0 = F.relu(self.linearIn(x))
+        if self.dr > 0 and (doDropMC is True or self.training is True) and not dropoutFalse:
+            x0 = F.dropout(x0, p=self.dr, training=True)
+        outLSTM, _ = self.lstm(x0)
+        out = self.linearOut(outLSTM)
+        return out
+
+    def forward(self, x, doDropMC=False, dropoutFalse=False):
+        if self._force_cpu_fallback:
+            if next(self.parameters()).device.type != 'cpu':
+                self.cpu()
+            out = self._forward_impl(x.cpu(), doDropMC=doDropMC, dropoutFalse=dropoutFalse)
+            return out.to(x.device)
+
+        try:
+            return self._forward_impl(x, doDropMC=doDropMC, dropoutFalse=dropoutFalse)
+        except RuntimeError as err:
+            msg = str(err).lower()
+            if x.device.type == 'cuda' and ('cublas runtime error' in msg or 'cuda' in msg):
+                self._force_cpu_fallback = True
+                self.cpu()
+                warnings.warn(
+                    'SafeLstmModel falling back to CPU after CUDA linear/LSTM failure; '
+                    'continuing training with CPU dynamic LG head.',
+                    RuntimeWarning)
+                out = self._forward_impl(x.cpu(), doDropMC=doDropMC, dropoutFalse=dropoutFalse)
+                return out.to(x.device)
+            raise
 
 
 class CNN1dLSTMmodel(torch.nn.Module):
@@ -871,11 +927,11 @@ def UH_conv(x,UH,viewmode=1):
 def UH_gamma(a,b,lenF=10):
     # UH. a [time (same all time steps), batch, var]
     m = a.shape
-    w = torch.zeros([lenF, m[1],m[2]])
+    w = torch.zeros([lenF, m[1],m[2]], device=a.device, dtype=a.dtype)
     aa = F.relu(a[0:lenF,:,:]).view([lenF, m[1],m[2]])+0.1 # minimum 0.1. First dimension of a is repeat
     theta = F.relu(b[0:lenF,:,:]).view([lenF, m[1],m[2]])+0.5 # minimum 0.5
     t = torch.arange(0.5,lenF*1.0).view([lenF,1,1]).repeat([1,m[1],m[2]])
-    t = t.cuda(aa.device)
+    t = t.to(device=aa.device, dtype=aa.dtype)
     denom = (aa.lgamma().exp())*(theta**aa)
     mid= t**(aa-1)
     right=torch.exp(-t/theta)
@@ -1820,7 +1876,9 @@ class MultiInv_SnowSIMHYDMulTDHeterModel(torch.nn.Module):
         self.staticOut = nn.Linear(hiddeninv, self.nstaticpm + self.nroutpm + self.nwtspm)
 
         if self.lgdyn is True:
-            self.lstmdyn = CudnnLstmModel(nx=ninv, ny=self.ndynpm, hiddenSize=hiddeninv, dr=drinv)
+            # Use the runtime-safe LSTM path for dynamic LG(t) so large global runs
+            # do not depend on the legacy CUDA-only CudnnLstm implementation.
+            self.lstmdyn = SafeLstmModel(nx=ninv, ny=self.ndynpm, hiddenSize=hiddeninv, dr=drinv)
             self.lgAttr = nn.Linear(nattr, self.ndynpm)
 
         self.simhyd = SnowSIMHYD8Differentiable(mode='normal', theta_is_raw=False, smooth=True)
@@ -1886,6 +1944,14 @@ class MultiInv_SnowSIMHYDMulTDHeterModel(torch.nn.Module):
             lg_bt = None
         else:
             lg_bt = lg_dyn.permute(1, 2, 0).contiguous().view(ngage * self.nmul, lg_dyn.shape[0], 1)
+        if lg_bt is not None and self.inittime > 0:
+            lg_bt_main = lg_bt[:, self.inittime:, :]
+        else:
+            lg_bt_main = lg_bt
+        if lg_bt is not None and self.inittime > 0:
+            lg_bt_main = lg_bt[:, self.inittime:, :]
+        else:
+            lg_bt_main = lg_bt
 
         if self.inittime > 0:
             warm_inputs = x_bt[:, :self.inittime, :]
@@ -2305,7 +2371,7 @@ class MultiInv_DynamicSimHydModel(torch.nn.Module):
         self.staticOut = nn.Linear(hiddeninv, self.nstaticpm + self.nroutpm + self.nwtspm)
 
         if self.lgdyn is True:
-            self.lstmdyn = CudnnLstmModel(nx=ninv, ny=self.ndynpm, hiddenSize=hiddeninv, dr=drinv)
+            self.lstmdyn = SafeLstmModel(nx=ninv, ny=self.ndynpm, hiddenSize=hiddeninv, dr=drinv)
             self.lgAttr = nn.Linear(nattr, self.ndynpm)
 
         self.simhyd = DynamicSimHydDifferentiable(
@@ -2517,8 +2583,10 @@ class DynamicSimHydModelFiveDifferentiable(nn.Module):
                 nn.Linear(dyn_hidden, dyn_hidden),
                 nn.ReLU(),
                 nn.Linear(dyn_hidden, self.dyn_out_dim))
+            self._dynhead_force_cpu_fallback = False
         else:
             self.dynHead = None
+            self._dynhead_force_cpu_fallback = False
 
     def _pos(self, x):
         if self.smooth:
@@ -2527,6 +2595,29 @@ class DynamicSimHydModelFiveDifferentiable(nn.Module):
 
     def _min(self, a, b):
         return a - self._pos(a - b)
+
+    def _run_dyn_head(self, dyn_in):
+        if self.dynHead is None:
+            return None
+        if self._dynhead_force_cpu_fallback:
+            if next(self.dynHead.parameters()).device.type != 'cpu':
+                self.dynHead.cpu()
+            out = self.dynHead(dyn_in.cpu())
+            return out.to(dyn_in.device)
+        try:
+            return self.dynHead(dyn_in)
+        except RuntimeError as err:
+            msg = str(err).lower()
+            if dyn_in.device.type == 'cuda' and ('cublas runtime error' in msg or 'cuda' in msg):
+                self._dynhead_force_cpu_fallback = True
+                self.dynHead.cpu()
+                warnings.warn(
+                    'DynamicSimHydModelFiveDifferentiable dynHead falling back to CPU after CUDA linear failure; '
+                    'continuing training with CPU dynamic process head.',
+                    RuntimeWarning)
+                out = self.dynHead(dyn_in.cpu())
+                return out.to(dyn_in.device)
+            raise
 
     def _expand(self, theta):
         if self.theta_is_raw:
@@ -2631,7 +2722,7 @@ class DynamicSimHydModelFiveDifferentiable(nn.Module):
                 SNOWPACK0 / 300.0,
                 sin_t,
                 cos_t], dim=1)
-            dyn_raw = None if self.dynHead is None else self.dynHead(dyn_in)
+            dyn_raw = self._run_dyn_head(dyn_in)
 
             # Dynamic SQ
             if self.dynamic_sq is True:
@@ -2871,7 +2962,7 @@ class MultiInv_DynamicSimHydModelFive(torch.nn.Module):
         self.staticOut = nn.Linear(hiddeninv, self.nstaticpm + self.nroutpm + self.nwtspm)
 
         if self.lgdyn is True:
-            self.lstmdyn = CudnnLstmModel(nx=ninv, ny=self.ndynpm, hiddenSize=hiddeninv, dr=drinv)
+            self.lstmdyn = SafeLstmModel(nx=ninv, ny=self.ndynpm, hiddenSize=hiddeninv, dr=drinv)
             self.lgAttr = nn.Linear(nattr, self.ndynpm)
 
         if self.dynamic_routing_scale is True:
@@ -3005,6 +3096,10 @@ class MultiInv_DynamicSimHydModelFive(torch.nn.Module):
             lg_bt = None
         else:
             lg_bt = lg_dyn.permute(1, 2, 0).contiguous().view(ngage * self.nmul, lg_dyn.shape[0], 1)
+        if lg_bt is not None and self.inittime > 0:
+            lg_bt_main = lg_bt[:, self.inittime:, :]
+        else:
+            lg_bt_main = lg_bt
 
         if snow_frac_raw is None:
             snow_frac_rep = None
@@ -3027,7 +3122,7 @@ class MultiInv_DynamicSimHydModelFive(torch.nn.Module):
                     main_inputs,
                     theta,
                     initial_state=warm_state,
-                    lg_dyn_seq=lg_bt,
+                    lg_dyn_seq=lg_bt_main,
                     lg_dyn_weight=self.lgdynweight,
                     snow_frac_raw=snow_frac_rep,
                     return_diagnostics=True,
@@ -3037,7 +3132,7 @@ class MultiInv_DynamicSimHydModelFive(torch.nn.Module):
                     main_inputs,
                     theta,
                     initial_state=warm_state,
-                    lg_dyn_seq=lg_bt,
+                    lg_dyn_seq=lg_bt_main,
                     lg_dyn_weight=self.lgdynweight,
                     snow_frac_raw=snow_frac_rep,
                     return_regularization=True)
@@ -3255,6 +3350,10 @@ class MultiInv_DynamicSimHydModelSix(MultiInv_DynamicSimHydModelFive):
             lg_bt = None
         else:
             lg_bt = lg_dyn.permute(1, 2, 0).contiguous().view(ngage * self.nmul, lg_dyn.shape[0], 1)
+        if lg_bt is not None and self.inittime > 0:
+            lg_bt_main = lg_bt[:, self.inittime:, :]
+        else:
+            lg_bt_main = lg_bt
 
         if snow_frac_raw is None:
             snow_frac_rep = None
@@ -3279,7 +3378,7 @@ class MultiInv_DynamicSimHydModelSix(MultiInv_DynamicSimHydModelFive):
                     main_inputs,
                     theta,
                     initial_state=warm_state,
-                    lg_dyn_seq=lg_bt,
+                    lg_dyn_seq=lg_bt_main,
                     lg_dyn_weight=self.lgdynweight,
                     snow_frac_raw=snow_frac_rep,
                     return_diagnostics=True,
@@ -3289,7 +3388,7 @@ class MultiInv_DynamicSimHydModelSix(MultiInv_DynamicSimHydModelFive):
                     main_inputs,
                     theta,
                     initial_state=warm_state,
-                    lg_dyn_seq=lg_bt,
+                    lg_dyn_seq=lg_bt_main,
                     lg_dyn_weight=self.lgdynweight,
                     snow_frac_raw=snow_frac_rep,
                     return_regularization=True)
@@ -3390,6 +3489,709 @@ class MultiInv_DynamicSimHydModelSix(MultiInv_DynamicSimHydModelFive):
         if diag_comp is not None:
             for name, tensor_comp in diag_comp.items():
                 diag_out[name] = self._mix_component_tensor(tensor_comp, ngage)
+        diag_out['total_discharge'] = out
+        diag_out['q_mix_before_routing'] = q_mix_before_routing
+        diag_out['component_discharge_raw'] = self._mix_or_mean(q_comp_raw, wts)
+        if self.dry_channel_loss is True:
+            diag_out['channel_loss'] = self._mix_or_mean(channel_loss, wts)
+            diag_out['channel_loss_fraction'] = self._mix_or_mean(channel_loss_fraction, wts)
+        if self.zero_flow_gate_enabled is True:
+            diag_out['zero_flow_probability'] = self._mix_or_mean(zero_flow_probability, wts)
+        if route_mult_seq is not None:
+            diag_out['route_b_t_multiplier'] = route_mult_seq
+        return out, diag_out
+
+
+class MultiInv_DynamicSimHydModelLowNSE_AridPulse(MultiInv_DynamicSimHydModelSix):
+    """
+    Model Six + one extra process only:
+    an arid threshold storm-pulse runoff term added before routing.
+    """
+
+    def __init__(self, *, ninv, nmul=4, nattr=35, hiddeninv=256, drinv=0.5, inittime=0,
+                 routOpt=True, comprout=False, compwts=True, lgdyn=True, lgdynweight=0.6,
+                 dynamic_sq=True, dynamic_etgam=True, dynamic_partition=True,
+                 dynamic_cfmax_snow=True, dynamic_routing_scale=False, dynamic_all=False,
+                 reg_amp_w=1e-3, reg_smooth_w=1e-3, reg_part_w=1e-3,
+                 component_routing=True, dry_channel_loss=True, zero_flow_gate=True,
+                 channel_loss_max=0.60, zero_gate_hidden=None,
+                 arid_pulse=True, pulse_max=0.50, pthr_min=5.0, pthr_max=35.0,
+                 pulse_cap_fraction=0.60):
+        super(MultiInv_DynamicSimHydModelLowNSE_AridPulse, self).__init__(
+            ninv=ninv, nmul=nmul, nattr=nattr, hiddeninv=hiddeninv, drinv=drinv, inittime=inittime,
+            routOpt=routOpt, comprout=comprout, compwts=compwts, lgdyn=lgdyn, lgdynweight=lgdynweight,
+            dynamic_sq=dynamic_sq, dynamic_etgam=dynamic_etgam, dynamic_partition=dynamic_partition,
+            dynamic_cfmax_snow=dynamic_cfmax_snow, dynamic_routing_scale=dynamic_routing_scale,
+            dynamic_all=dynamic_all, reg_amp_w=reg_amp_w, reg_smooth_w=reg_smooth_w,
+            reg_part_w=reg_part_w, component_routing=component_routing,
+            dry_channel_loss=dry_channel_loss, zero_flow_gate=zero_flow_gate,
+            channel_loss_max=channel_loss_max, zero_gate_hidden=zero_gate_hidden)
+        self.arid_pulse = arid_pulse
+        self.pulse_max = pulse_max
+        self.pthr_min = pthr_min
+        self.pthr_max = pthr_max
+        self.pulse_cap_fraction = pulse_cap_fraction
+        self.aridPulseHead = nn.Linear(nattr, nmul * 3)
+
+    def _apply_arid_pulse(self, q_comp, x, diag_comp, theta, basin_attr, ngage):
+        if self.arid_pulse is not True:
+            zeros = torch.zeros_like(q_comp)
+            return q_comp, zeros, zeros, zeros, zeros
+
+        T, B, M, _ = q_comp.shape
+        pulse_raw = self.aridPulseHead(basin_attr).view(ngage, self.nmul, 3)
+        raw_c = pulse_raw[:, :, 0:1]
+        raw_thr = pulse_raw[:, :, 1:2]
+        raw_dry = pulse_raw[:, :, 2:3]
+        c_pulse = self.pulse_max * torch.sigmoid(raw_c)
+        p_threshold = self.pthr_min + (self.pthr_max - self.pthr_min) * torch.sigmoid(raw_thr)
+        dry_sensitivity = torch.sigmoid(raw_dry)
+
+        if diag_comp is not None and 'soil_moisture' in diag_comp:
+            soil_m = self._component_tensor_4d(diag_comp['soil_moisture'], ngage)
+            smsc = self._theta_to_smsc(theta, ngage).unsqueeze(0)
+            wetness = torch.clamp(soil_m / torch.clamp(smsc, min=1e-6), 0.0, 1.0)
+            dryness = 1.0 - wetness
+        else:
+            dryness = torch.ones_like(q_comp) * 0.5
+
+        p_t = x[:, :, 0:1].unsqueeze(2).repeat(1, 1, M, 1)
+        c_rep = c_pulse.unsqueeze(0)
+        thr_rep = p_threshold.unsqueeze(0)
+        ds_rep = dry_sensitivity.unsqueeze(0)
+        p_excess = F.relu(p_t - thr_rep)
+        dry_factor = 0.25 + 0.75 * dryness * ds_rep
+        q_pulse = c_rep * dry_factor * p_excess
+        q_pulse = torch.minimum(q_pulse, self.pulse_cap_fraction * p_t)
+        q_after = torch.clamp(q_comp + q_pulse, min=0.0)
+        pulse_frac = q_pulse / torch.clamp(q_after, min=1e-6)
+        return q_after, q_pulse, pulse_frac, thr_rep.expand(T, -1, -1, -1), c_rep.expand(T, -1, -1, -1), dryness
+
+    def forward(self, x, z, doDropMC=False, return_diagnostics=False):
+        nt_x = x.shape[0]
+        ngage = z.shape[1]
+        basin_attr = z[-1, :, -self.nattr:]
+
+        if z.shape[2] > self.nattr:
+            snow_frac_raw = torch.clamp(z[-1, :, -self.nattr - 1:-self.nattr], min=0.0, max=1.0)
+        else:
+            snow_frac_raw = None
+
+        staticFeat = self.staticFeat(basin_attr)
+        staticParams0 = self.staticOut(staticFeat)
+
+        cursor = 0
+        static0 = staticParams0[:, cursor:cursor + self.nstaticpm].view(ngage, self.nfea, self.nmul)
+        static0 = static0 + self.compStaticBias
+        snowpara = torch.sigmoid(static0)
+        cursor += self.nstaticpm
+
+        routpara0 = staticParams0[:, cursor:cursor + self.nroutpm]
+        if self.component_routing is True:
+            routpara = torch.sigmoid(routpara0).view(ngage * self.nmul, 2)
+        elif self.comprout is False:
+            routpara = torch.sigmoid(routpara0)
+        else:
+            routpara = torch.sigmoid(routpara0).view(ngage * self.nmul, 2)
+        cursor += self.nroutpm
+
+        if self.nwtspm == 0:
+            wts = None
+        else:
+            wtspara = staticParams0[:, cursor:cursor + self.nwtspm] + self.compWeightBias
+            wts = F.softmax(wtspara, dim=-1)
+        self._last_wts = wts
+
+        if self.lgdyn is False:
+            lg_dyn = None
+        else:
+            lg_dyn_seq = self.lstmdyn(z)
+            lg_attr_bias = self.lgAttr(basin_attr).unsqueeze(0).repeat(lg_dyn_seq.shape[0], 1, 1)
+            lg_dyn = torch.sigmoid(lg_dyn_seq + lg_attr_bias)
+
+        x_rep = x.unsqueeze(2).repeat(1, 1, self.nmul, 1).view(nt_x, ngage * self.nmul, x.shape[2])
+        x_bt = x_rep.permute(1, 0, 2)
+        theta = snowpara.permute(0, 2, 1).contiguous().view(ngage * self.nmul, self.nfea)
+
+        if lg_dyn is None:
+            lg_bt = None
+        else:
+            lg_bt = lg_dyn.permute(1, 2, 0).contiguous().view(ngage * self.nmul, lg_dyn.shape[0], 1)
+
+        if snow_frac_raw is None:
+            snow_frac_rep = None
+        else:
+            snow_frac_rep = snow_frac_raw.unsqueeze(1).repeat(1, self.nmul, 1).view(ngage * self.nmul, 1)
+
+        need_process_diag = return_diagnostics or self.dry_channel_loss or self.zero_flow_gate_enabled or self.arid_pulse
+
+        if self.inittime > 0:
+            warm_inputs = x_bt[:, :self.inittime, :]
+            main_inputs = x_bt[:, self.inittime:, :]
+            x_use = x[self.inittime:, :, :]
+            _, warm_state = self.simhyd_analysis(
+                warm_inputs,
+                theta,
+                lg_dyn_seq=None,
+                lg_dyn_weight=self.lgdynweight,
+                snow_frac_raw=snow_frac_rep,
+                return_final_state=True)
+            if need_process_diag:
+                q_seq, diag_comp, reg_terms = self.simhyd(
+                    main_inputs, theta, initial_state=warm_state, lg_dyn_seq=lg_bt,
+                    lg_dyn_weight=self.lgdynweight, snow_frac_raw=snow_frac_rep,
+                    return_diagnostics=True, return_regularization=True)
+            else:
+                q_seq, reg_terms = self.simhyd(
+                    main_inputs, theta, initial_state=warm_state, lg_dyn_seq=lg_bt,
+                    lg_dyn_weight=self.lgdynweight, snow_frac_raw=snow_frac_rep,
+                    return_regularization=True)
+                diag_comp = None
+        else:
+            x_use = x
+            if need_process_diag:
+                q_seq, diag_comp, reg_terms = self.simhyd(
+                    x_bt, theta, lg_dyn_seq=lg_bt, lg_dyn_weight=self.lgdynweight,
+                    snow_frac_raw=snow_frac_rep, return_diagnostics=True,
+                    return_regularization=True)
+            else:
+                q_seq, reg_terms = self.simhyd(
+                    x_bt, theta, lg_dyn_seq=lg_bt, lg_dyn_weight=self.lgdynweight,
+                    snow_frac_raw=snow_frac_rep, return_regularization=True)
+                diag_comp = None
+
+        reg_total = self.reg_amp_w * reg_terms['dynamic_amplitude_loss'] \
+            + self.reg_smooth_w * reg_terms['dynamic_smoothness_loss'] \
+            + self.reg_part_w * reg_terms['partition_entropy_loss']
+        self._last_aux_terms = reg_terms
+        self._last_aux_loss = reg_total
+
+        q_comp_raw = q_seq.view(ngage, self.nmul, q_seq.shape[1], 1).permute(2, 0, 1, 3)
+        q_comp_raw = torch.clamp(q_comp_raw, min=0.0)
+
+        q_after_loss, channel_loss, channel_loss_fraction = self._apply_channel_loss(q_comp_raw, diag_comp, theta, basin_attr, ngage)
+        q_after_gate, zero_flow_probability = self._apply_zero_flow_gate(q_after_loss, x_use, diag_comp, theta, ngage)
+        q_after_gate = torch.clamp(q_after_gate, min=0.0)
+        q_comp, arid_pulse_runoff, arid_pulse_fraction, arid_pulse_threshold, arid_pulse_coeff, arid_pulse_dryness = \
+            self._apply_arid_pulse(q_after_gate, x_use, diag_comp, theta, basin_attr, ngage)
+
+        q_mix_before_routing = self._mix_or_mean(q_comp, wts)
+        route_mult_seq = None
+        if self.routOpt is True and self.component_routing is True:
+            q_for_routing = q_comp.permute(0, 1, 3, 2).contiguous().view(q_comp.shape[0], ngage * self.nmul, 1)
+            if self.dynamic_routing_scale is True:
+                if diag_comp is not None and 'soil_moisture' in diag_comp:
+                    sm_comp = self._component_tensor_4d(diag_comp['soil_moisture'], ngage)
+                else:
+                    sm_comp = torch.ones_like(q_comp) * 50.0
+                smsc_comp = self._theta_to_smsc(theta, ngage).unsqueeze(0).repeat(q_comp.shape[0], 1, 1, 1)
+                p_rep = x_use[:, :, 0:1].unsqueeze(2).repeat(1, 1, self.nmul, 1)
+                if x_use.shape[-1] >= 5:
+                    sin_rep = x_use[:, :, 3:4].unsqueeze(2).repeat(1, 1, self.nmul, 1)
+                    cos_rep = x_use[:, :, 4:5].unsqueeze(2).repeat(1, 1, self.nmul, 1)
+                else:
+                    sin_rep = torch.zeros_like(q_comp)
+                    cos_rep = torch.ones_like(q_comp)
+                x_route = torch.cat([p_rep, sm_comp, smsc_comp, sin_rep, cos_rep], dim=-1).view(q_comp.shape[0], ngage * self.nmul, 5)
+                q_routed_flat, route_mult_flat = self._route_q_dynamic_scale(q_for_routing, routpara, x_route)
+                route_mult_4d = route_mult_flat.view(q_comp.shape[0], ngage, self.nmul, 1)
+                route_mult_seq = self._mix_or_mean(route_mult_4d, wts)
+                self._last_aux_loss = self._last_aux_loss + self.reg_amp_w * torch.mean((route_mult_flat - 1.0) ** 2)
+                self._last_aux_loss = self._last_aux_loss + self.reg_smooth_w * torch.mean(
+                    (route_mult_flat[1:, :, :] - route_mult_flat[:-1, :, :]) ** 2)
+                q_routed = q_routed_flat.view(q_comp.shape[0], ngage, self.nmul, 1)
+            else:
+                q_routed = self._route_q(q_for_routing, routpara).view(q_comp.shape[0], ngage, self.nmul, 1)
+            out = self._mix_or_mean(q_routed, wts)
+        else:
+            if self.routOpt is True and self.dynamic_routing_scale is True and self.comprout is False:
+                if diag_comp is not None and 'soil_moisture' in diag_comp:
+                    sm_mix = self._mix_component_tensor(diag_comp['soil_moisture'], ngage)
+                else:
+                    sm_mix = torch.ones_like(q_mix_before_routing) * 50.0
+                smsc_mix = torch.ones_like(q_mix_before_routing) * 200.0
+                x_route = torch.cat([x_use[:, :, 0:1], sm_mix, smsc_mix, x_use[:, :, 3:4], x_use[:, :, 4:5]], dim=2)
+                out, route_mult_seq = self._route_q_dynamic_scale(q_mix_before_routing, routpara, x_route)
+                self._last_aux_loss = self._last_aux_loss + self.reg_amp_w * torch.mean((route_mult_seq - 1.0) ** 2)
+                self._last_aux_loss = self._last_aux_loss + self.reg_smooth_w * torch.mean(
+                    (route_mult_seq[1:, :, :] - route_mult_seq[:-1, :, :]) ** 2)
+            elif self.routOpt is True:
+                if self.comprout is True:
+                    q_for_routing = q_comp.permute(0, 1, 3, 2).contiguous().view(q_comp.shape[0], ngage * self.nmul, 1)
+                    q_routed = self._route_q(q_for_routing, routpara).view(q_comp.shape[0], ngage, self.nmul, 1)
+                    out = self._mix_or_mean(q_routed, wts)
+                else:
+                    out = self._route_q(q_mix_before_routing, routpara)
+            else:
+                out = q_mix_before_routing
+
+        out = torch.clamp(out, min=0.0)
+        if return_diagnostics is not True:
+            return out
+
+        diag_out = dict()
+        if diag_comp is not None:
+            for name, tensor_comp in diag_comp.items():
+                diag_out[name] = self._mix_component_tensor(tensor_comp, ngage)
+        diag_out['total_discharge'] = out
+        diag_out['q_mix_before_routing'] = q_mix_before_routing
+        diag_out['component_discharge_raw'] = self._mix_or_mean(q_comp_raw, wts)
+        if self.dry_channel_loss is True:
+            diag_out['channel_loss'] = self._mix_or_mean(channel_loss, wts)
+            diag_out['channel_loss_fraction'] = self._mix_or_mean(channel_loss_fraction, wts)
+        if self.zero_flow_gate_enabled is True:
+            diag_out['zero_flow_probability'] = self._mix_or_mean(zero_flow_probability, wts)
+        diag_out['arid_pulse_runoff'] = self._mix_or_mean(arid_pulse_runoff, wts)
+        diag_out['arid_pulse_fraction_of_total'] = self._mix_or_mean(arid_pulse_fraction, wts)
+        diag_out['arid_pulse_threshold'] = self._mix_or_mean(arid_pulse_threshold, wts)
+        diag_out['arid_pulse_coefficient'] = self._mix_or_mean(arid_pulse_coeff, wts)
+        diag_out['arid_pulse_dryness'] = self._mix_or_mean(arid_pulse_dryness, wts)
+        if route_mult_seq is not None:
+            diag_out['route_b_t_multiplier'] = route_mult_seq
+        return out, diag_out
+
+
+class DynamicSimHydModelFiveDifferentiableSlowGW(DynamicSimHydModelFiveDifferentiable):
+    def __init__(self, mode='normal', theta_is_raw=False, smooth=True, eps=1e-4, rain_snow_gain=5.0,
+                 dynamic_sq=True, dynamic_etgam=True, dynamic_partition=True, dynamic_cfmax_snow=True,
+                 dynamic_routing_scale=False, dynamic_all=False, dyn_hidden=32,
+                 use_slow_gw=True, kslow_min=0.001, kslow_max=0.050, slow_init_max=300.0):
+        super(DynamicSimHydModelFiveDifferentiableSlowGW, self).__init__(
+            mode=mode, theta_is_raw=theta_is_raw, smooth=smooth, eps=eps, rain_snow_gain=rain_snow_gain,
+            dynamic_sq=dynamic_sq, dynamic_etgam=dynamic_etgam, dynamic_partition=dynamic_partition,
+            dynamic_cfmax_snow=dynamic_cfmax_snow, dynamic_routing_scale=dynamic_routing_scale,
+            dynamic_all=dynamic_all, dyn_hidden=dyn_hidden)
+        self.use_slow_gw = use_slow_gw
+        self.kslow_min = kslow_min
+        self.kslow_max = kslow_max
+        self.slow_init_max = slow_init_max
+
+    def _expand(self, theta):
+        if self.theta_is_raw:
+            theta = torch.sigmoid(theta)
+        INSC = 0.5 + theta[:, 0:1] * (5.0 - 0.5)
+        COEF = 50.0 + theta[:, 1:2] * (400.0 - 50.0)
+        SQ = 0.0 + theta[:, 2:3] * (6.0 - 0.0)
+        SMSC = 50.0 + theta[:, 3:4] * (500.0 - 50.0)
+        SUB = 0.0 + theta[:, 4:5] * (1.0 - 0.0)
+        CRAK = 0.0 + theta[:, 5:6] * (1.0 - 0.0)
+        K = 0.003 + theta[:, 6:7] * (0.3 - 0.003)
+        LG = 0.0 + theta[:, 7:8] * (0.2 - 0.0)
+        TT = -2.5 + theta[:, 8:9] * (2.5 - (-2.5))
+        CFMAX = 0.5 + theta[:, 9:10] * (10.0 - 0.5)
+        CFR = 0.0 + theta[:, 10:11] * (0.1 - 0.0)
+        CWH = 0.0 + theta[:, 11:12] * (0.2 - 0.0)
+        SG_CRIT = 0.0 + theta[:, 12:13] * (300.0 - 0.0)
+        RHO_SLOW = torch.sigmoid(theta[:, 13:14] * 6.0 - 3.0)
+        K_SLOW = self.kslow_min + (self.kslow_max - self.kslow_min) * torch.sigmoid(theta[:, 14:15] * 6.0 - 3.0)
+        S_SLOW_INIT = self.slow_init_max * torch.sigmoid(theta[:, 15:16] * 6.0 - 3.0)
+        return INSC, COEF, SQ, SMSC, SUB, CRAK, K, LG, TT, CFMAX, CFR, CWH, SG_CRIT, RHO_SLOW, K_SLOW, S_SLOW_INIT
+
+    @torch.no_grad()
+    def denorm_params(self, theta):
+        return torch.cat(self._expand(theta), dim=1)
+
+    def forward(self, inputs, theta, initial_state=None, lg_dyn_seq=None, lg_dyn_weight=0.6,
+                snow_frac_raw=None, return_diagnostics=False, return_final_state=False,
+                return_regularization=False):
+        B, Tlen, _ = inputs.shape
+        device = inputs.device
+        dtype = inputs.dtype
+        INSC, COEF, SQ, SMSC, SUB, CRAK, K, LG, TT, CFMAX, CFR, CWH, SG_CRIT, RHO_SLOW, K_SLOW, S_SLOW_INIT = self._expand(theta)
+
+        P = self._pos(inputs[:, :, 0:1])
+        TEMP = inputs[:, :, 1:2]
+        E0 = self._pos(inputs[:, :, 2:3])
+
+        if initial_state is None:
+            SMS = torch.zeros(B, 1, device=device, dtype=dtype)
+            GW = torch.zeros(B, 1, device=device, dtype=dtype)
+            SNOWPACK = torch.zeros(B, 1, device=device, dtype=dtype)
+            MELTWATER = torch.zeros(B, 1, device=device, dtype=dtype)
+            SLOWGW = self._pos(S_SLOW_INIT)
+        else:
+            SMS = initial_state[:, 0:1]
+            GW = initial_state[:, 1:2]
+            SNOWPACK = initial_state[:, 2:3]
+            MELTWATER = initial_state[:, 3:4]
+            SLOWGW = initial_state[:, 4:5]
+
+        if lg_dyn_seq is not None and (lg_dyn_seq.shape[0] != B or lg_dyn_seq.shape[1] != Tlen):
+            raise ValueError('lg_dyn_seq must have shape [B, T, 1] matching inputs')
+
+        if snow_frac_raw is None:
+            snow_mask = torch.ones(B, 1, device=device, dtype=dtype)
+        else:
+            snow_mask = (snow_frac_raw > 0.05).float()
+
+        q_hist = []
+        diag_hist = dict()
+        if return_diagnostics is True:
+            for name in [
+                'snowpack', 'interception_storage', 'soil_moisture', 'groundwater', 'slow_groundwater_storage',
+                'rainfall', 'snowfall', 'snowmelt', 'interception_evaporation', 'actual_ET',
+                'infiltration', 'recharge_to_groundwater', 'surface_runoff', 'interflow',
+                'baseflow', 'groundwater_loss', 'channel_loss', 'total_discharge',
+                'COEF_t', 'SQ_t', 'ETGAM_t', 'SUB_t', 'CRAK_t', 'K_t', 'LG_t', 'SG_CRIT', 'CFMAX_t',
+                'slow_recharge', 'slow_baseflow', 'fast_recharge', 'fast_baseflow',
+                'quick_runoff', 'event_flow_before_loss', 'event_flow_after_loss'
+            ]:
+                diag_hist[name] = []
+
+        sq_mult_hist = []
+        cfmax_mult_hist = []
+        recharge_frac_hist = []
+
+        for t in range(Tlen):
+            Pt = P[:, t, :]
+            Tt = TEMP[:, t, :]
+            E0t = E0[:, t, :]
+
+            SMS0 = self._min(self._pos(SMS), SMSC)
+            GW0 = self._pos(GW)
+            SNOWPACK0 = self._pos(SNOWPACK)
+            MELTWATER0 = self._pos(MELTWATER)
+            SLOWGW0 = self._pos(SLOWGW)
+            wetness = torch.clamp(SMS0 / (SMSC + 1e-8), min=0.0, max=1.5)
+
+            sin_t, cos_t = self._seasonal_feats(inputs, t, device, dtype)
+            dyn_in = torch.cat([Pt / 20.0, Tt / 20.0, E0t / 10.0, SMS0 / 300.0, wetness, GW0 / 300.0, SNOWPACK0 / 300.0, sin_t, cos_t], dim=1)
+            dyn_raw = None if self.dynHead is None else self.dynHead(dyn_in)
+
+            m_sq = 0.5 + 1.5 * torch.sigmoid(dyn_raw[:, self.dyn_slices['sq']]) if self.dynamic_sq is True else torch.ones_like(SQ)
+            SQ_t = torch.clamp(SQ * m_sq, 0.0, 6.0)
+            ETGAM_t = 0.25 + 3.75 * torch.sigmoid(dyn_raw[:, self.dyn_slices['etgam']]) if self.dynamic_etgam is True else torch.ones_like(SQ)
+            if self.dynamic_cfmax_snow is True:
+                m_cf = 0.7 + 0.8 * torch.sigmoid(dyn_raw[:, self.dyn_slices['cfmax']])
+                m_cf_eff = snow_mask * m_cf + (1.0 - snow_mask)
+            else:
+                m_cf_eff = torch.ones_like(SQ)
+            CFMAX_t = CFMAX * m_cf_eff
+
+            frac_rain = torch.sigmoid(self.rain_snow_gain * (Tt - TT)) if self.smooth else (Tt >= TT).float()
+            RAIN = Pt * frac_rain
+            SNOW = Pt * (1.0 - frac_rain)
+            SNOWPACK1 = SNOWPACK0 + SNOW
+            melt_pot = CFMAX_t * self._pos(Tt - TT)
+            melt = self._min(melt_pot, SNOWPACK1)
+            MELTWATER1 = MELTWATER0 + melt
+            SNOWPACK2 = SNOWPACK1 - melt
+            refreeze_pot = CFR * CFMAX_t * self._pos(TT - Tt)
+            refreezing = self._min(refreeze_pot, MELTWATER1)
+            SNOWPACK3 = SNOWPACK2 + refreezing
+            MELTWATER2 = MELTWATER1 - refreezing
+            water_holding = CWH * SNOWPACK3
+            tosoil = self._pos(MELTWATER2 - water_holding)
+            MELTWATER_next = self._pos(MELTWATER2 - tosoil)
+            SNOWPACK_next = self._pos(SNOWPACK3)
+            Peff = RAIN + tosoil
+
+            IMAX = self._min(INSC, E0t)
+            INT = self._min(IMAX, Peff)
+            INR = self._pos(Peff - INT)
+            infil_cap = COEF * torch.exp(-SQ_t * wetness)
+            RMO = self._min(infil_cap, INR)
+            IRUN_excess = self._pos(INR - RMO)
+
+            available = wetness * RMO
+            base_surface = torch.clamp(SUB, 1e-6, 1.0)
+            base_recharge = torch.clamp((1.0 - SUB) * CRAK, 1e-6, 1.0)
+            base_inter = torch.clamp((1.0 - SUB) * (1.0 - CRAK), 1e-6, 1.0)
+            base_logits = torch.cat([torch.log(base_surface), torch.log(base_inter), torch.log(base_recharge)], dim=1)
+            part_logits = base_logits + dyn_raw[:, self.dyn_slices['partition']] if self.dynamic_partition is True else base_logits
+            part_frac = F.softmax(part_logits, dim=1)
+            f_surface = part_frac[:, 0:1]
+            f_inter = part_frac[:, 1:2]
+            f_recharge = part_frac[:, 2:3]
+
+            SRUN = IRUN_excess + f_surface * available
+            IFLOW = f_inter * available
+            REC = f_recharge * available
+            SMF = self._pos(RMO - available)
+
+            POT = self._pos(E0t - INT)
+            et_scale = torch.pow(torch.clamp(wetness, min=1e-6, max=1.0), ETGAM_t)
+            et_scale = torch.clamp(et_scale, max=1.0)
+            ETS = self._min(POT * et_scale, SMS0 + SMF)
+
+            SMS_pre = SMS0 + SMF - ETS
+            SOIL_EXCESS = self._pos(SMS_pre - SMSC)
+            SMS_next = self._pos(SMS_pre - SOIL_EXCESS)
+            REC_total = REC + SOIL_EXCESS
+
+            if lg_dyn_seq is None:
+                LG_t = LG
+            else:
+                LG_dyn_t = torch.clamp(lg_dyn_seq[:, t, :], 0.0, 1.0)
+                LG_eff = (1.0 - lg_dyn_weight) * LG + lg_dyn_weight * (LG * LG_dyn_t * 1.5)
+                LG_t = torch.clamp(LG_eff, 0.0, 0.2)
+
+            R_slow = RHO_SLOW * REC_total if self.use_slow_gw else torch.zeros_like(REC_total)
+            R_fast = REC_total - R_slow
+            BAS_FAST = K * F.softplus(GW0 - SG_CRIT)
+            GWLOSS = LG_t * F.softplus(SG_CRIT - GW0)
+            GW_next = self._pos(GW0 + R_fast - BAS_FAST - GWLOSS)
+            Q_slow = K_SLOW * SLOWGW0
+            SLOWGW_next = torch.clamp(SLOWGW0 + R_slow - Q_slow, min=0.0)
+
+            quick_runoff = SRUN + IFLOW
+            event_flow_before_loss = quick_runoff + BAS_FAST
+            Q = self._pos(event_flow_before_loss + Q_slow)
+
+            SMS = SMS_next
+            GW = GW_next
+            SLOWGW = SLOWGW_next
+            SNOWPACK = SNOWPACK_next
+            MELTWATER = MELTWATER_next
+
+            q_hist.append(Q)
+            sq_mult_hist.append(m_sq)
+            cfmax_mult_hist.append(m_cf_eff)
+            recharge_frac_hist.append(f_recharge)
+
+            if return_diagnostics is True:
+                diag_vals = {
+                    'snowpack': SNOWPACK_next,
+                    'interception_storage': torch.zeros_like(INT),
+                    'soil_moisture': SMS_next,
+                    'groundwater': GW_next,
+                    'slow_groundwater_storage': SLOWGW_next,
+                    'rainfall': RAIN,
+                    'snowfall': SNOW,
+                    'snowmelt': melt,
+                    'interception_evaporation': INT,
+                    'actual_ET': ETS,
+                    'infiltration': RMO,
+                    'recharge_to_groundwater': REC_total,
+                    'surface_runoff': SRUN,
+                    'interflow': IFLOW,
+                    'baseflow': BAS_FAST + Q_slow,
+                    'groundwater_loss': GWLOSS,
+                    'channel_loss': torch.zeros_like(Q),
+                    'total_discharge': Q,
+                    'COEF_t': COEF,
+                    'SQ_t': SQ_t,
+                    'ETGAM_t': ETGAM_t,
+                    'SUB_t': f_surface,
+                    'CRAK_t': f_recharge,
+                    'K_t': K,
+                    'LG_t': LG_t,
+                    'SG_CRIT': SG_CRIT,
+                    'CFMAX_t': CFMAX_t,
+                    'slow_recharge': R_slow,
+                    'slow_baseflow': Q_slow,
+                    'fast_recharge': R_fast,
+                    'fast_baseflow': BAS_FAST,
+                    'quick_runoff': quick_runoff,
+                    'event_flow_before_loss': event_flow_before_loss,
+                    'event_flow_after_loss': event_flow_before_loss,
+                }
+                for name, val in diag_vals.items():
+                    diag_hist[name].append(val)
+
+        q_seq = torch.stack(q_hist, dim=1)
+        final_state = torch.cat([SMS, GW, SNOWPACK, MELTWATER, SLOWGW], dim=1)
+
+        reg_amp = torch.tensor(0.0, device=device, dtype=dtype)
+        reg_smooth = torch.tensor(0.0, device=device, dtype=dtype)
+        reg_part = torch.tensor(0.0, device=device, dtype=dtype)
+        if len(sq_mult_hist) > 0:
+            sq_seq = torch.stack(sq_mult_hist, dim=1)
+            reg_amp = reg_amp + torch.mean((sq_seq - 1.0) ** 2)
+            reg_smooth = reg_smooth + torch.mean((sq_seq[:, 1:, :] - sq_seq[:, :-1, :]) ** 2)
+        if len(cfmax_mult_hist) > 0:
+            cf_seq = torch.stack(cfmax_mult_hist, dim=1)
+            reg_amp = reg_amp + torch.mean((cf_seq - 1.0) ** 2)
+            reg_smooth = reg_smooth + torch.mean((cf_seq[:, 1:, :] - cf_seq[:, :-1, :]) ** 2)
+        if len(recharge_frac_hist) > 0:
+            r_seq = torch.stack(recharge_frac_hist, dim=1)
+            reg_part = torch.mean(torch.relu(r_seq - 0.85) ** 2)
+        reg_terms = {'dynamic_amplitude_loss': reg_amp, 'dynamic_smoothness_loss': reg_smooth, 'partition_entropy_loss': reg_part}
+
+        if return_diagnostics is True:
+            diag_out = {name: torch.stack(vals, dim=1) for name, vals in diag_hist.items()}
+            if return_regularization is True and return_final_state is True:
+                return q_seq, diag_out, final_state, reg_terms
+            if return_regularization is True:
+                return q_seq, diag_out, reg_terms
+            if return_final_state is True:
+                return q_seq, diag_out, final_state
+            return q_seq, diag_out
+        if return_regularization is True and return_final_state is True:
+            return q_seq, final_state, reg_terms
+        if return_regularization is True:
+            return q_seq, reg_terms
+        if return_final_state is True:
+            return q_seq, final_state
+        return q_seq
+
+
+class MultiInv_DynamicSimHydModelLowNSE_AridSlowGW(MultiInv_DynamicSimHydModelSix):
+    def __init__(self, *, ninv, nmul=4, nattr=35, hiddeninv=256, drinv=0.5, inittime=0,
+                 routOpt=True, comprout=False, compwts=True, lgdyn=True, lgdynweight=0.6,
+                 dynamic_sq=True, dynamic_etgam=True, dynamic_partition=True,
+                 dynamic_cfmax_snow=True, dynamic_routing_scale=False, dynamic_all=False,
+                 reg_amp_w=1e-3, reg_smooth_w=1e-3, reg_part_w=1e-3,
+                 component_routing=True, dry_channel_loss=True, zero_flow_gate=True,
+                 channel_loss_max=0.60, zero_gate_hidden=None,
+                 use_slow_gw=True, kslow_min=0.001, kslow_max=0.050, slow_init_max=300.0):
+        super(MultiInv_DynamicSimHydModelLowNSE_AridSlowGW, self).__init__(
+            ninv=ninv, nmul=nmul, nattr=nattr, hiddeninv=hiddeninv, drinv=drinv, inittime=inittime,
+            routOpt=routOpt, comprout=comprout, compwts=compwts, lgdyn=lgdyn, lgdynweight=lgdynweight,
+            dynamic_sq=dynamic_sq, dynamic_etgam=dynamic_etgam, dynamic_partition=dynamic_partition,
+            dynamic_cfmax_snow=dynamic_cfmax_snow, dynamic_routing_scale=dynamic_routing_scale,
+            dynamic_all=dynamic_all, reg_amp_w=reg_amp_w, reg_smooth_w=reg_smooth_w,
+            reg_part_w=reg_part_w, component_routing=component_routing,
+            dry_channel_loss=dry_channel_loss, zero_flow_gate=zero_flow_gate,
+            channel_loss_max=channel_loss_max, zero_gate_hidden=zero_gate_hidden)
+        self.nfea = 16
+        self.nstaticpm = self.nfea * nmul
+        self.staticOut = nn.Linear(hiddeninv, self.nstaticpm + self.nroutpm + self.nwtspm)
+        comp_bias = torch.linspace(-0.15, 0.15, nmul).view(1, 1, nmul).repeat(1, self.nfea, 1)
+        self.compStaticBias = nn.Parameter(comp_bias)
+        self.simhyd = DynamicSimHydModelFiveDifferentiableSlowGW(
+            mode='normal', theta_is_raw=False, smooth=True,
+            dynamic_sq=self.dynamic_sq, dynamic_etgam=self.dynamic_etgam,
+            dynamic_partition=self.dynamic_partition, dynamic_cfmax_snow=self.dynamic_cfmax_snow,
+            dynamic_routing_scale=self.dynamic_routing_scale, dynamic_all=self.dynamic_all,
+            use_slow_gw=use_slow_gw, kslow_min=kslow_min, kslow_max=kslow_max, slow_init_max=slow_init_max)
+        self.simhyd_analysis = DynamicSimHydModelFiveDifferentiableSlowGW(
+            mode='analysis', theta_is_raw=False, smooth=True,
+            dynamic_sq=self.dynamic_sq, dynamic_etgam=self.dynamic_etgam,
+            dynamic_partition=self.dynamic_partition, dynamic_cfmax_snow=self.dynamic_cfmax_snow,
+            dynamic_routing_scale=self.dynamic_routing_scale, dynamic_all=self.dynamic_all,
+            use_slow_gw=use_slow_gw, kslow_min=kslow_min, kslow_max=kslow_max, slow_init_max=slow_init_max)
+
+    def forward(self, x, z, doDropMC=False, return_diagnostics=False):
+        nt_x = x.shape[0]
+        ngage = z.shape[1]
+        basin_attr = z[-1, :, -self.nattr:]
+        snow_frac_raw = torch.clamp(z[-1, :, -self.nattr - 1:-self.nattr], min=0.0, max=1.0) if z.shape[2] > self.nattr else None
+
+        staticFeat = self.staticFeat(basin_attr)
+        staticParams0 = self.staticOut(staticFeat)
+        cursor = 0
+        static0 = staticParams0[:, cursor:cursor + self.nstaticpm].view(ngage, self.nfea, self.nmul) + self.compStaticBias
+        snowpara = torch.sigmoid(static0)
+        cursor += self.nstaticpm
+        routpara0 = staticParams0[:, cursor:cursor + self.nroutpm]
+        routpara = torch.sigmoid(routpara0).view(ngage * self.nmul, 2) if self.component_routing is True else torch.sigmoid(routpara0)
+        cursor += self.nroutpm
+        if self.nwtspm == 0:
+            wts = None
+        else:
+            wtspara = staticParams0[:, cursor:cursor + self.nwtspm] + self.compWeightBias
+            wts = F.softmax(wtspara, dim=-1)
+        self._last_wts = wts
+
+        if self.lgdyn is False:
+            lg_dyn = None
+        else:
+            lg_dyn_seq = self.lstmdyn(z)
+            lg_attr_bias = self.lgAttr(basin_attr).unsqueeze(0).repeat(lg_dyn_seq.shape[0], 1, 1)
+            lg_dyn = torch.sigmoid(lg_dyn_seq + lg_attr_bias)
+
+        x_rep = x.unsqueeze(2).repeat(1, 1, self.nmul, 1).view(nt_x, ngage * self.nmul, x.shape[2])
+        x_bt = x_rep.permute(1, 0, 2)
+        theta = snowpara.permute(0, 2, 1).contiguous().view(ngage * self.nmul, self.nfea)
+        lg_bt = None if lg_dyn is None else lg_dyn.permute(1, 2, 0).contiguous().view(ngage * self.nmul, lg_dyn.shape[0], 1)
+        snow_frac_rep = None if snow_frac_raw is None else snow_frac_raw.unsqueeze(1).repeat(1, self.nmul, 1).view(ngage * self.nmul, 1)
+
+        need_process_diag = return_diagnostics or self.dry_channel_loss or self.zero_flow_gate_enabled
+        if self.inittime > 0:
+            warm_inputs = x_bt[:, :self.inittime, :]
+            main_inputs = x_bt[:, self.inittime:, :]
+            x_use = x[self.inittime:, :, :]
+            _, warm_state = self.simhyd_analysis(
+                warm_inputs, theta, lg_dyn_seq=None, lg_dyn_weight=self.lgdynweight,
+                snow_frac_raw=snow_frac_rep, return_final_state=True)
+            if need_process_diag:
+                q_seq, diag_comp, reg_terms = self.simhyd(
+                    main_inputs, theta, initial_state=warm_state, lg_dyn_seq=lg_bt,
+                    lg_dyn_weight=self.lgdynweight, snow_frac_raw=snow_frac_rep,
+                    return_diagnostics=True, return_regularization=True)
+            else:
+                q_seq, reg_terms = self.simhyd(
+                    main_inputs, theta, initial_state=warm_state, lg_dyn_seq=lg_bt,
+                    lg_dyn_weight=self.lgdynweight, snow_frac_raw=snow_frac_rep,
+                    return_regularization=True)
+                diag_comp = None
+        else:
+            x_use = x
+            if need_process_diag:
+                q_seq, diag_comp, reg_terms = self.simhyd(
+                    x_bt, theta, lg_dyn_seq=lg_bt, lg_dyn_weight=self.lgdynweight,
+                    snow_frac_raw=snow_frac_rep, return_diagnostics=True, return_regularization=True)
+            else:
+                q_seq, reg_terms = self.simhyd(
+                    x_bt, theta, lg_dyn_seq=lg_bt, lg_dyn_weight=self.lgdynweight,
+                    snow_frac_raw=snow_frac_rep, return_regularization=True)
+                diag_comp = None
+
+        reg_total = self.reg_amp_w * reg_terms['dynamic_amplitude_loss'] + self.reg_smooth_w * reg_terms['dynamic_smoothness_loss'] + self.reg_part_w * reg_terms['partition_entropy_loss']
+        self._last_aux_terms = reg_terms
+        self._last_aux_loss = reg_total
+
+        q_comp_raw = q_seq.view(ngage, self.nmul, q_seq.shape[1], 1).permute(2, 0, 1, 3)
+        q_comp_raw = torch.clamp(q_comp_raw, min=0.0)
+        if diag_comp is not None and 'slow_baseflow' in diag_comp:
+            q_slow = self._component_tensor_4d(diag_comp['slow_baseflow'], ngage)
+        else:
+            q_slow = torch.zeros_like(q_comp_raw)
+        if diag_comp is not None and 'event_flow_before_loss' in diag_comp:
+            q_event = self._component_tensor_4d(diag_comp['event_flow_before_loss'], ngage)
+        else:
+            q_event = torch.clamp(q_comp_raw - q_slow, min=0.0)
+
+        q_event_after_loss, channel_loss, channel_loss_fraction = self._apply_channel_loss(q_event, diag_comp, theta, basin_attr, ngage)
+        q_event_after_gate, zero_flow_probability = self._apply_zero_flow_gate(q_event_after_loss, x_use, diag_comp, theta, ngage)
+        q_event_after_gate = torch.clamp(q_event_after_gate, min=0.0)
+        q_comp = torch.clamp(q_event_after_gate + q_slow, min=0.0)
+        q_mix_before_routing = self._mix_or_mean(q_comp, wts)
+        route_mult_seq = None
+        if self.routOpt is True and self.component_routing is True:
+            q_for_routing = q_comp.permute(0, 1, 3, 2).contiguous().view(q_comp.shape[0], ngage * self.nmul, 1)
+            if self.dynamic_routing_scale is True:
+                if diag_comp is not None and 'soil_moisture' in diag_comp:
+                    sm_comp = self._component_tensor_4d(diag_comp['soil_moisture'], ngage)
+                else:
+                    sm_comp = torch.ones_like(q_comp) * 50.0
+                smsc_comp = self._theta_to_smsc(theta, ngage).unsqueeze(0).repeat(q_comp.shape[0], 1, 1, 1)
+                p_rep = x_use[:, :, 0:1].unsqueeze(2).repeat(1, 1, self.nmul, 1)
+                if x_use.shape[-1] >= 5:
+                    sin_rep = x_use[:, :, 3:4].unsqueeze(2).repeat(1, 1, self.nmul, 1)
+                    cos_rep = x_use[:, :, 4:5].unsqueeze(2).repeat(1, 1, self.nmul, 1)
+                else:
+                    sin_rep = torch.zeros_like(q_comp)
+                    cos_rep = torch.ones_like(q_comp)
+                x_route = torch.cat([p_rep, sm_comp, smsc_comp, sin_rep, cos_rep], dim=-1).view(q_comp.shape[0], ngage * self.nmul, 5)
+                q_routed_flat, route_mult_flat = self._route_q_dynamic_scale(q_for_routing, routpara, x_route)
+                route_mult_4d = route_mult_flat.view(q_comp.shape[0], ngage, self.nmul, 1)
+                route_mult_seq = self._mix_or_mean(route_mult_4d, wts)
+                self._last_aux_loss = self._last_aux_loss + self.reg_amp_w * torch.mean((route_mult_flat - 1.0) ** 2)
+                self._last_aux_loss = self._last_aux_loss + self.reg_smooth_w * torch.mean((route_mult_flat[1:, :, :] - route_mult_flat[:-1, :, :]) ** 2)
+                q_routed = q_routed_flat.view(q_comp.shape[0], ngage, self.nmul, 1)
+            else:
+                q_routed = self._route_q(q_for_routing, routpara).view(q_comp.shape[0], ngage, self.nmul, 1)
+            out = self._mix_or_mean(q_routed, wts)
+        else:
+            if self.routOpt is True:
+                out = self._route_q(q_mix_before_routing, routpara)
+            else:
+                out = q_mix_before_routing
+        out = torch.clamp(out, min=0.0)
+        if return_diagnostics is not True:
+            return out
+        diag_out = dict()
+        if diag_comp is not None:
+            for name, tensor_comp in diag_comp.items():
+                diag_out[name] = self._mix_component_tensor(tensor_comp, ngage)
+        diag_out['event_flow'] = self._mix_or_mean(q_event_after_gate, wts)
+        diag_out['slow_baseflow'] = self._mix_or_mean(q_slow, wts)
+        if diag_comp is not None and 'slow_groundwater_storage' in diag_comp:
+            diag_out['slow_groundwater_storage'] = self._mix_component_tensor(diag_comp['slow_groundwater_storage'], ngage)
+        if diag_comp is not None and 'slow_recharge' in diag_comp:
+            diag_out['slow_recharge'] = self._mix_component_tensor(diag_comp['slow_recharge'], ngage)
         diag_out['total_discharge'] = out
         diag_out['q_mix_before_routing'] = q_mix_before_routing
         diag_out['component_discharge_raw'] = self._mix_or_mean(q_comp_raw, wts)

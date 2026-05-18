@@ -116,6 +116,15 @@ python scripts/evaluate.py demo \
   --run-name demo_5_basins
 ```
 
+The bundled demo defaults use a shorter slice:
+
+- train: `1980-10-01` to `1983-10-01`
+- test: `1983-10-01` to `1984-10-01`
+
+This keeps the notebook and demo CLI run lightweight while still exercising the full Model 6 code path end to end.
+
+For portability in the public demo, the 5-basin notebook and demo CLI instantiate the safe static-`LG` variant of Model 6. The full `671`-basin training and evaluation scripts in this release still point to the original Model 6 configuration used for the published epoch-30 results.
+
 ## Train or Evaluate the Full 671-Basin Model
 
 Prepare the CAMELS-US raw data externally and point the release scripts to that data root.

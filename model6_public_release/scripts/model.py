@@ -20,7 +20,7 @@ ensure_hydrodl_on_path()
 from hydroDL.model import rnn  # noqa: E402
 
 
-def build_model_six(ninv: int, nattr: int, hidden_size: int = 64, nmul: int = 4, inittime: int = 365):
+def build_model_six(ninv: int, nattr: int, hidden_size: int = 64, nmul: int = 4, inittime: int = 365, lgdyn: bool = True):
     return rnn.MultiInv_DynamicSimHydModelSix(
         ninv=ninv,
         nmul=nmul,
@@ -30,7 +30,7 @@ def build_model_six(ninv: int, nattr: int, hidden_size: int = 64, nmul: int = 4,
         routOpt=True,
         comprout=False,
         compwts=True,
-        lgdyn=True,
+        lgdyn=lgdyn,
         lgdynweight=0.6,
         dynamic_sq=True,
         dynamic_etgam=True,

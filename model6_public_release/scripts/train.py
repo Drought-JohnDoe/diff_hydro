@@ -28,7 +28,14 @@ def train_demo(args):
     out_dir = root / "outputs" / "demo_training" / args.run_name
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    dataset = build_demo_dataset(demo_root, bufftime=args.bufftime)
+    dataset = build_demo_dataset(
+        demo_root,
+        train_start=args.train_start,
+        train_end=args.train_end,
+        test_start=args.test_start,
+        test_end=args.test_end,
+        bufftime=args.bufftime,
+    )
     ninv = dataset["z_train"].shape[-1] + dataset["attrs"].shape[-1]
     model = build_model_six(
         ninv=ninv,
@@ -36,6 +43,7 @@ def train_demo(args):
         hidden_size=args.hidden_size,
         nmul=args.nmul,
         inittime=args.bufftime,
+        lgdyn=False,
     )
     loss_fun = crit.RmseLossComb(alpha=0.25)
 
@@ -122,6 +130,10 @@ def parse_args():
     pdemo.add_argument("--nmul", type=int, default=4)
     pdemo.add_argument("--gpu-id", type=int, default=0)
     pdemo.add_argument("--seed", type=int, default=111111)
+    pdemo.add_argument("--train-start", default="1980-10-01")
+    pdemo.add_argument("--train-end", default="1983-10-01")
+    pdemo.add_argument("--test-start", default="1983-10-01")
+    pdemo.add_argument("--test-end", default="1984-10-01")
 
     pfull = sub.add_parser("full671", help="Launch the original full 671-basin training script")
     pfull.add_argument("--data-root", default=None)
