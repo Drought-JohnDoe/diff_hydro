@@ -30,7 +30,9 @@ If you prefer one-off commands, replace `python` with:
   - basin-scale flux and diagnostic maps
   - `comparison_vs_hbv/` with:
     - Model 6 epoch-30 spatial NSE plots
+    - Model 6 epoch-30 spatial `R²` and `logNSE` plots
     - NSE histogram comparing Model 6 epoch 30 against HBV epoch 10
+    - a numbered/binned NSE spatial map with basin counts in the legend
     - NSE bin-count table for Model 6 vs HBV
 - `results/representative_basins/`
   - one poor, one moderate, and one very good basin with metrics and streamflow plots
