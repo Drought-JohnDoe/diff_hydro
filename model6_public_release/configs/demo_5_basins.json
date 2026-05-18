@@ -1,0 +1,10 @@
+{
+  "run_name": "demo_5_basins",
+  "epochs": 2,
+  "batch_size": 5,
+  "rho": 365,
+  "bufftime": 365,
+  "hidden_size": 64,
+  "nmul": 4,
+  "seed": 111111
+}
