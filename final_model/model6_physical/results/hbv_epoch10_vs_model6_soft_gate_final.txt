@@ -1,0 +1,33 @@
+HBV Epoch 10 physical audit and comparison against Model6PhysicalFix_B_soft_gate
+
+Basins audited: 671
+Test period: 19951001 to 20101001
+HBV routed-Q reproduction mean abs diff vs saved pred10.npy: 0.000055 mm/day
+HBV routed-Q reproduction max abs diff vs saved pred10.npy: 2.970567 mm/day
+
+HBV Epoch 10
+- median NSE: 0.6278
+- median KGE: 0.6377
+- median R2: 0.6838
+- median FLV: -22.4910
+- median FHV: -38.3193
+- median low-flow NSE: -25.1368
+- median high-flow NSE: 0.5133
+- median mean abs water-balance residual: 0.000009 mm/day
+- median cumulative relative water-balance error: 0.000003
+- basins >1% relative water-balance error: 0
+
+Model6PhysicalFix_B_soft_gate
+- median NSE: 0.7158
+- median KGE: 0.7475
+- median R2: 0.7516
+- median FLV: -21.5748
+- median FHV: -32.7954
+- median low-flow NSE: -10.3630
+- median high-flow NSE: 0.6208
+- median mean abs water-balance residual: 0.033850 mm/day
+- median cumulative relative water-balance error: 0.013588
+- basins >1% relative water-balance error: 416
+
+Water-balance verdict: HBV is tighter on mass balance than Model 6 soft gate.
+Performance verdict: Model 6 soft gate outperforms HBV on median NSE.

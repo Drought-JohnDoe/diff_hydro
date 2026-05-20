@@ -1,0 +1,42 @@
+Model6_HBVDeepGWHybrid demo-32 final result
+Subset size: 32
+Basins: [1568000, 1594950, 2016000, 2064000, 2065500, 2149000, 2178400, 2315500, 2350900, 2371500, 2481510, 3050000, 3161000, 3456500, 4059500, 5393500, 5591550, 6311000, 6885500, 7149000, 7151500, 7315200, 8079600, 8086290, 8103900, 9484000, 10336645, 11266500, 11482500, 12178100, 14096850, 14301000]
+
+HBV_Epoch10
+- median NSE: 0.6960
+- median KGE: 0.7032
+- median R2: 0.7433
+- median FLV: -30.3734
+- median FHV: -34.2231
+- median low-flow NSE: -11.0610
+- median high-flow NSE: 0.5397
+- median WB residual: 0.000010 mm/day
+- median relative WB error: 0.000003
+- basins >1% relative WB error: 0
+
+Model6PhysicalFix_B_soft_gate
+- median NSE: 0.7224
+- median KGE: 0.7602
+- median R2: 0.7515
+- median FLV: -29.6135
+- median FHV: -29.7850
+- median low-flow NSE: -6.1702
+- median high-flow NSE: 0.6617
+- median WB residual: 0.035301 mm/day
+- median relative WB error: 0.013528
+- basins >1% relative WB error: 19
+
+Model6_HBVDeepGWHybrid
+- median NSE: 0.6220
+- median KGE: 0.6246
+- median R2: 0.6431
+- median FLV: -0.6002
+- median FHV: -45.3994
+- median low-flow NSE: -19.5265
+- median high-flow NSE: 0.5312
+- median WB residual: 0.000753 mm/day
+- median relative WB error: 0.000217
+- basins >1% relative WB error: 0
+
+Best by physical validity first: HBV_Epoch10
+Best by median NSE: Model6PhysicalFix_B_soft_gate

@@ -1,0 +1,41 @@
+Model 6 physical-fix summary
+best_variant: Model6PhysicalFix_B_soft_gate
+
+Original Model 6:
+- median NSE: 0.7094
+- median KGE: 0.7326
+- median R2: 0.7396
+- median FLV: -26.6214
+- median FHV: -34.5996
+- median relative water-balance error: 3.7057
+
+Model6PhysicalFix_A_explicit_gate:
+- median NSE: 0.7078
+- median KGE: 0.7480
+- median R2: 0.7466
+- median FLV: -24.5045
+- median FHV: -30.9434
+- NSE<0 count: 29
+- median low-flow NSE: -11.3612
+- median high-flow NSE: 0.6094
+- median relative water-balance error: 0.014909
+- basins with relative error >1%: 447
+- median ET/P ratio: 0.4965
+- median sim/obs mean Q ratio: 1.0369
+
+Model6PhysicalFix_B_soft_gate:
+- median NSE: 0.7158
+- median KGE: 0.7475
+- median R2: 0.7516
+- median FLV: -21.5748
+- median FHV: -32.7954
+- NSE<0 count: 29
+- median low-flow NSE: -10.3630
+- median high-flow NSE: 0.6208
+- median relative water-balance error: 0.013588
+- basins with relative error >1%: 416
+- median ET/P ratio: 0.5129
+- median sim/obs mean Q ratio: 1.0159
+
+Selection logic: physical validity first, then median NSE, then low/high-flow behavior.
+Chosen best model: Model6PhysicalFix_B_soft_gate
