@@ -1,0 +1,43 @@
+Model6Closed_Snow_aSrz_SIMHYD_Simple full671 vs soft-gate comparison
+Train epochs: 31-60
+Batch size: 256
+Rho: 365
+Max iter per epoch: 20
+GPU id: 1
+Closed-model warm start: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_full671_ep30/model_Ep30_state.pt
+Soft-gate baseline checkpoint: /home/mircore/Desktop/diff_hydro/Model_six_physical/Model6PhysicalFix_B_soft_gate_continue_Ep50/model_Ep40_state.pt
+
+Model6PhysicalFix_B_soft_gate
+- median NSE: 0.7199
+- mean NSE: 0.5552
+- median KGE: 0.7503
+- median R2: 0.7499
+- median FLV: -23.3826
+- median FHV: -32.4911
+- median low-flow NSE: -10.3102
+- median high-flow NSE: 0.6198
+- median ET/P: 0.5006
+- median Q/P: 0.3765
+- median closure residual: 0.030563 mm/day
+- median cumulative WB error: 0.012490
+- basins >1% WB error: 393
+- total external losses / P: 0.142909
+
+Model6Closed_Snow_aSrz_SIMHYD_Simple
+- median NSE: 0.6702
+- mean NSE: 0.4211
+- median KGE: 0.6557
+- median R2: 0.7133
+- median FLV: 5.2265
+- median FHV: -34.9849
+- median low-flow NSE: -31.2572
+- median high-flow NSE: 0.5814
+- median ET/P: 0.6007
+- median Q/P: 0.3958
+- median closure residual: 0.000184 mm/day
+- median cumulative WB error: 0.000057
+- basins >1% WB error: 0
+- total external losses / P: 0.000000
+- median alpha mean: 0.5764
+- median mean aSrz: 71.86 mm
+- median aSrz capacity: 168.23 mm
