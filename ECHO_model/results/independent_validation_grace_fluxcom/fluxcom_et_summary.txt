@@ -1,0 +1,8 @@
+FLUXCOM ET validation
+valid basins: 164 / 671
+median R2: 0.7311
+mean R2: 0.6796
+median NSE: 0.4677
+mean NSE: 0.2853
+median KGE: 0.4470
+mean KGE: 0.4486
