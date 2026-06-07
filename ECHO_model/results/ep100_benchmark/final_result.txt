@@ -9,42 +9,36 @@ Soft-gate baseline checkpoint: /home/mircore/Desktop/diff_hydro/Model_six_physic
 
 Model6PhysicalFix_B_soft_gate
 - median NSE: 0.7199
-- mean NSE: 0.4790
-- median KGE: 0.7244
-- median R2: 0.7394
-- median FLV: -26.9244
-- median FHV: -23.2036
-- median low-flow NSE: -13.2955
-- median high-flow NSE: 0.6609
-- median ET/P: 0.6044
-- median Q/P: 0.3944
-- median alpha mean: 0.4574
-- median aSrz capacity: 165.0294 mm
-- median mean aSrz: 90.1804 mm
-- median weighted process closure residual: 0.001055 mm/day
-- mean weighted process closure residual: 0.014709 mm/day
-- median weighted cumulative relative water-balance error: 0.000307
-- mean weighted cumulative relative water-balance error: 0.004225
-- basins >1% water-balance error: 0
-- total external losses / P: 0.162578
+- mean NSE: 0.5552
+- median KGE: 0.7503
+- median R2: 0.7499
+- median FLV: -23.3826
+- median FHV: -32.4911
+- median low-flow NSE: -10.3102
+- median high-flow NSE: 0.6198
+- median ET/P: 0.5006
+- median Q/P: 0.3765
+- median closure residual: 0.030563 mm/day
+- median cumulative WB error: 0.012490
+- basins >1% WB error: 393
+- total external losses / P: 0.142909
 
 Model6Closed_Snow_aSrz_SIMHYD_Simple
-- median NSE: 0.6896
-- mean NSE: 0.4526
-- median KGE: 0.6471
-- median R2: 0.7355
-- median FLV: 4.6911
-- median FHV: -34.7471
-- median low-flow NSE: -34.6355
-- median high-flow NSE: 0.6051
-- median ET/P: 0.5720
-- median Q/P: 0.4211
-- median alpha mean: 0.4601
-- median aSrz capacity: 170.2163 mm
-- median mean aSrz: 112.9083 mm
-- median weighted process closure residual: 0.000182 mm/day
-- mean weighted process closure residual: 0.000183 mm/day
-- median weighted cumulative relative water-balance error: 0.000056
-- mean weighted cumulative relative water-balance error: 0.000056
-- basins >1% water-balance error: 0
+- median NSE: 0.6848
+- mean NSE: 0.4799
+- median KGE: 0.6430
+- median R2: 0.7310
+- median FLV: 11.6762
+- median FHV: -32.4298
+- median low-flow NSE: -38.1052
+- median high-flow NSE: 0.6020
+- median ET/P: 0.5712
+- median Q/P: 0.4279
+- median closure residual: 0.000183 mm/day
+- median cumulative WB error: 0.000056
+- basins >1% WB error: 0
 - total external losses / P: 0.000000
+- median alpha mean: 0.5374
+- median mean aSrz: 73.67 mm
+- median aSrz capacity: 166.09 mm
+

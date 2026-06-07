@@ -1,0 +1,14 @@
+name: echo_model
+channels:
+  - pytorch
+  - conda-forge
+dependencies:
+  - python=3.11
+  - numpy
+  - pandas
+  - matplotlib
+  - pytorch
+  - jupyter
+  - nbformat
+  - nbconvert
+  - ipykernel

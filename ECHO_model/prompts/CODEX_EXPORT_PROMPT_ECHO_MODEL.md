@@ -255,3 +255,4 @@ If no Git repository is active, stop cleanly and report:
 
 - that the export is complete locally
 - that GitHub shipping still requires a repo root or remote target
+

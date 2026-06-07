@@ -1,0 +1,8 @@
+GRACE TWSA validation
+valid basins: 164 / 671
+median R2: 0.5049
+mean R2: 0.4674
+median NSE: 0.3508
+mean NSE: -9.0847
+median KGE: 0.4764
+mean KGE: 0.1742
