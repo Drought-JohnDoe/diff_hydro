@@ -1,0 +1,20 @@
+{
+  "paper_workspace": "/home/mircore/Desktop/diff_hydro/WRR_Model6_EndToEnd_Paper",
+  "overleaf_bundle": "/home/mircore/Desktop/diff_hydro/WRR_paper_export/overleaf_bundle",
+  "reproducibility_bundle": "/home/mircore/Desktop/diff_hydro/WRR_paper_export/reproducibility_bundle",
+  "zip_overleaf": "/home/mircore/Desktop/diff_hydro/WRR_paper_overleaf_bundle.zip",
+  "zip_reproducibility": "/home/mircore/Desktop/diff_hydro/WRR_paper_reproducibility_bundle.zip",
+  "overleaf_bundle_size": "16M",
+  "reproducibility_bundle_size": "321M",
+  "omitted_large_files": [
+    "/home/mircore/Desktop/diff_hydro/WRR_Model6_EndToEnd_Paper/diagnostics/model6_ep100_daily_basin_day.parquet",
+    "/home/mircore/Desktop/diff_hydro/WRR_paper_reproducibility_bundle.zip"
+  ],
+  "github_export_policy": {
+    "push_overleaf_zip": true,
+    "push_reproducibility_zip": false,
+    "push_reproducibility_folder": true
+  },
+  "latex_pdf_compiled_locally": false,
+  "latex_status": "tex source prepared; no local TeX engine available"
+}

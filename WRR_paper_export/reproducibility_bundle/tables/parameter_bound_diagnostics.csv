@@ -1,0 +1,6 @@
+parameter,frac_near_lower_1pct,frac_near_upper_1pct,median
+theta_wetpoint_weighted_ep60,0.12816691505216096,0.0,0.33731297
+theta_ab_weighted,0.0,0.323397913561848,0.98914313
+theta_ak_weighted,0.488822652757079,0.0,1.0939264
+theta_efmax_weighted,0.0,0.0,0.7762197
+K_weighted,0.005961251862891207,0.0,0.059810333

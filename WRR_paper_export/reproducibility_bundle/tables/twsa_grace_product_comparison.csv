@@ -1,0 +1,4 @@
+product,status,n_basin_metrics
+JPL_mascon,available_local,164
+CSR_mascon,missing_local_downloader_template_only,0
+GSFC_mascon,missing_local_downloader_template_only,0

@@ -1,0 +1,1 @@
+Values below 0 are clipped to 0 for visualization; original values are retained in the basin-level metric table.

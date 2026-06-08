@@ -1,0 +1,10 @@
+{
+  "daily_rows": 3676409,
+  "monthly_rows": 120780,
+  "n_basins_daily": 671,
+  "date_start_daily": "1995-10-01",
+  "date_end_daily": "2010-09-30",
+  "state_source": "Ep60 auxiliary state archive",
+  "snow_et_source": "local Model6 external validation daily products",
+  "main_benchmark_source": "Ep100 saved benchmark outputs"
+}

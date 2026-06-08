@@ -1,0 +1,74 @@
+project:
+  name: WRR_Model6_EndToEnd_Paper
+  root_dir: /home/mircore/Desktop/diff_hydro/WRR_Model6_EndToEnd_Paper
+
+model:
+  main_run_dir: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_full671_ep100_iter200
+  main_checkpoint: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_full671_ep100_iter200/model_Ep100_state.pt
+  ep100_metrics_csv: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_full671_ep100_iter200/per_basin_metrics_compare.csv
+  ep100_water_balance_csv: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_full671_ep100_iter200/water_balance_compare.csv
+  ep100_summary_csv: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_full671_ep100_iter200/summary_compare.csv
+  ep100_basin_metadata_csv: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_full671_ep100_iter200/basin_metadata.csv
+  ep60_aux_daily_archive: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_full671_ep60/drought_tipping_theta_wetpoint/drought_tipping_daily_basin_day.parquet
+  ep60_theta_diagnostics_csv: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_full671_ep60/theta_wetpoint_diagnostics/theta_wetpoint_diagnostics_671.csv
+
+basins:
+  shapefile: /home/mircore/Desktop/diff_hydro/Camels/basin_timeseries_v1p2_metForcing_obsFlow/basin_dataset_public_v1p2/shapefiles/merge/basinset_gf_nhru.shp
+  basin_id_column: GAGEID
+  attrs_dir: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/ECO_INPUTS_2020/camels_us/camels_attributes_v2
+  hydro_region_column: huc_02
+  area_threshold_grace_km2: 2000.0
+
+forcing:
+  caravan_era5_dir: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/ECO_INPUTS_2020/caravan/camels_us_era5_timeseries
+  streamflow_source: observed streamflow embedded in CAMELS/Caravan evaluation assets
+
+independent_products:
+  gleam_daily_csv: /home/mircore/Desktop/diff_hydro/outputs/Model6_ExternalValidation/gleam_basin_daily.csv
+  gleam_monthly_csv: /home/mircore/Desktop/diff_hydro/outputs/Model6_ExternalValidation/gleam_basin_monthly.csv
+  fluxcom_monthly_parquet: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_full671_ep100_iter200/independent_validation_grace_fluxcom/fluxcom_et_basin_monthly.parquet
+  fluxcom_metrics_csv: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_full671_ep100_iter200/independent_validation_grace_fluxcom/fluxcom_et_per_basin_metrics.csv
+  mod16_annual_csv: /home/mircore/Desktop/diff_hydro/outputs/Model6_ExternalValidation/MOD16A3GF_Model6_ET/model6_vs_mod16a3gf_annual_et_by_basin.csv
+  grace_jpl_nc: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/ECO_INPUTS_2020/grace_jpl/raw/GRCTellus.JPL.200204_202603.GLO.RL06.3M.MSCNv04CRI.nc
+  grace_jpl_basin_monthly_parquet: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_full671_ep100_iter200/independent_validation_grace_fluxcom/grace_twsa_basin_monthly.parquet
+  grace_jpl_metrics_csv: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_full671_ep100_iter200/independent_validation_grace_fluxcom/grace_twsa_per_basin_metrics.csv
+  grace_csr_path: null
+  grace_gsfc_path: null
+  esa_cci_sm_dir: /home/mircore/Desktop/diff_hydro/results/validation/raw/esacci_sm
+  swe_validation_dir: /home/mircore/Desktop/diff_hydro/outputs/Model6_ExternalValidation/NSIDC0719_Model6_SWE
+
+outputs:
+  inventory_csv: /home/mircore/Desktop/diff_hydro/WRR_Model6_EndToEnd_Paper/data_inventory/local_data_inventory.csv
+  inventory_md: /home/mircore/Desktop/diff_hydro/WRR_Model6_EndToEnd_Paper/data_inventory/local_data_inventory.md
+  diagnostics_dir: /home/mircore/Desktop/diff_hydro/WRR_Model6_EndToEnd_Paper/diagnostics
+  tables_dir: /home/mircore/Desktop/diff_hydro/WRR_Model6_EndToEnd_Paper/tables
+  figures_dir: /home/mircore/Desktop/diff_hydro/WRR_Model6_EndToEnd_Paper/figures
+  maps_dir: /home/mircore/Desktop/diff_hydro/WRR_Model6_EndToEnd_Paper/maps
+  manuscript_dir: /home/mircore/Desktop/diff_hydro/WRR_Model6_EndToEnd_Paper/manuscript
+  logs_dir: /home/mircore/Desktop/diff_hydro/WRR_Model6_EndToEnd_Paper/logs
+
+dates:
+  model_train_start: 1980-10-01
+  model_train_end: 1995-10-01
+  model_test_start: 1995-10-01
+  model_test_end: 2010-10-01
+  anomaly_reference_start: 2002-04-01
+  anomaly_reference_end: 2010-09-30
+
+plotting:
+  projection_epsg: 5070
+  latlon_epsg: 4326
+  dpi: 300
+  cmap_main: viridis
+  cmap_diverging: RdBu_r
+  missing_color: lightgrey
+  figure_format_main:
+    - png
+    - pdf
+
+units:
+  discharge: mm/day
+  et: mm/day
+  et_monthly: mm/month
+  storage: mm
+  twsa: mm
