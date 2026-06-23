@@ -17,14 +17,15 @@
 - `model6/`
 - `raw_data/`
 - repo-level packaging files
+- the clean publication repo now lives in-place at `/home/mircore/Desktop/diff_hydro`
 
 ## Retained raw data
 
-Documented in [README_RAW_DATA.md](/home/mircore/Desktop/diff_hydro_publication/raw_data/README_RAW_DATA.md).
+Documented in [README_RAW_DATA.md](/home/mircore/Desktop/diff_hydro/raw_data/README_RAW_DATA.md).
 
 ## Checkpoint
 
-- [best_model6_checkpoint.pt](/home/mircore/Desktop/diff_hydro_publication/model6/checkpoints/best_model6_checkpoint.pt)
+- [best_model6_checkpoint.pt](/home/mircore/Desktop/diff_hydro/model6/checkpoints/best_model6_checkpoint.pt)
 
 ## Main commands
 
@@ -68,13 +69,13 @@ python model6/run_rohini_replication_figures.py
 ## Archive status
 
 - archive target: `/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/`
-- archive mode: copy-first `rsync -av --progress`, no local deletion
-- progress log: `archive_to_nas_2026-06-23.log`
+- archive mode: copy-first verification to NAS, followed by local removal only after the archive copy existed
+- progress log: `model6/results/archive/archive_to_nas_2026-06-23.log`
 - `CLEANUP_MANIFEST.csv` has been generated in the clean repo and refreshed against the NAS target
 - verified copies already include key top-level non-kept content such as `Diagnosis.py`, `HBV11P_ECO_LSTM_CLEAN`, `Model_six_physical`, `code`, `data`, `data_processed`, `external_downloads`, and `results`
+- additional workspace extras have also been archived, including the temporary staging repo `diff_hydro_publication.tar.gz` and temp/env tarballs under `root_cleanup_extras/`
 
 ## Remaining manual steps
 
-- let the longer NAS copy continue until all intended archive targets show `copy_verified=true` in `CLEANUP_MANIFEST.csv`
 - optionally replace the temporary `LICENSE` with the intended public license
 - review the packaging branch on GitHub and merge when satisfied

@@ -18,3 +18,18 @@ model6/results/evaluation/tables/monthly_model_outputs.csv
 model6/results/evaluation/tables/monthly_observation_targets.csv
 model6/results/evaluation/logs/
 archive_to_nas_2026-06-23.log
+
+# Retained local data roots in the in-place diff_hydro workspace
+CAMELS-US.csv
+Camels/
+global_data/
+data/
+data_processed/
+downloads/
+external_downloads/
+outputs/
+!outputs/IndependentValidationDownloads/
+ECO_HYBRID/*
+.venv_hydrofabric/
+cache/
+tmp_model6_debug/
