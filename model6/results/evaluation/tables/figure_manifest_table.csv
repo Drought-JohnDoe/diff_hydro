@@ -1,0 +1,9 @@
+Figure,Script,Output file,Required data,Status
+Figure 1,scripts/figures/figure1_conceptual_asrz.py,figures/Figure1_conceptual_asrz_model6.png,none,complete
+Figure 2,scripts/figures/figure2_model_framework.py,figures/Figure2_model_framework_model6.png,locked model config,complete
+Figure 3,scripts/figures/figure3_multivariable_performance.py,figures/Figure3_multivariable_performance_primary.png,"Q, MODIS ET, SWE, GRACE",complete if audit finds products
+Figure 4,scripts/figures/figure4_spatial_climatic_mean_asrz.py,figures/Figure4_spatial_climatic_mean_asrz.png,"aSrz, attributes",complete
+Figure 5,scripts/figures/figure5_asrz_twsa_sm_dynamics.py,figures/Figure5_asrz_twsa_sm_dynamics.png,"aSrz, GRACE, ESA CCI SM",complete
+Figure 6,scripts/figures/figure6_asrz_capacity.py,figures/Figure6_asrz_capacity.png,"aSrz capacity, attributes",complete
+Figure 7,scripts/figures/figure7_shap_controls_capacity.py,figures/Figure7_shap_controls_capacity.png,"aSrz capacity, P, PET, LAI, slope, sand",complete with SHAP or permutation fallback
+Figure 8,scripts/figures/figure8_identifiability_theta_cap.py,figures/Figure8_identifiability_theta_cap.png,current theta_cap; ablation configs,current-only unless ablations are trained

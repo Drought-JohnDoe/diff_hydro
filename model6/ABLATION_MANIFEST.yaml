@@ -1,0 +1,10 @@
+theta_cap_ablation_status: config_only_except_current_locked_model
+reason: full 671 retraining for theta_cap structural ablations was not present in the locked branch and was not run by this packaging step.
+experiments:
+  - theta_cap_b_max_600: config_only_not_run
+  - theta_cap_b_max_800: config_only_not_run
+  - theta_cap_b_max_1000: config_only_not_run
+  - theta_cap_b_max_1200: config_only_not_run
+  - theta_cap_b_max_2000: config_only_not_run
+  - no_prior_direct_nn_theta_cap: config_only_not_run
+  - current_locked_direct_theta_cap: evaluated_current_model

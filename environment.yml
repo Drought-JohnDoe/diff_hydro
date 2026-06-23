@@ -1,0 +1,16 @@
+name: diff-hydro-publication
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - numpy<2
+  - pandas
+  - matplotlib
+  - pyarrow
+  - scikit-learn
+  - shap
+  - statsmodels
+  - pyyaml
+  - pip
+  - pip:
+      - torch

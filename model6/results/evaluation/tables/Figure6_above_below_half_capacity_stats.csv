@@ -1,0 +1,5 @@
+,aridity_index,aridity_index,aridity_index,mean_realized_arz_mm,mean_realized_arz_mm,mean_realized_arz_mm,max_realized_arz_mm,max_realized_arz_mm,max_realized_arz_mm
+,count,median,mean,count,median,mean,count,median,mean
+above_half_capacity,,,,,,,,,
+False,397,1.1143683195114136,1.3426644769813911,397,77.53142117366104,83.32752808610356,397,208.1493625640869,217.06854714823197
+True,274,0.6663931906223297,0.6419129091566497,274,65.31795973180746,82.79958373353159,274,115.58820915222168,143.8758534273646

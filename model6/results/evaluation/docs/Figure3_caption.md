@@ -1,0 +1,1 @@
+Figure 3. Monthly observed versus simulated variables for locked Model 6. ET uses MODIS MOD16 as primary product; runoff uses observed streamflow; SWE uses snow-dominated NSIDC/SNODAS overlap; TWSA uses GRACE/JPL basin-month anomalies. Weak SWE performance is retained in the panel metrics.

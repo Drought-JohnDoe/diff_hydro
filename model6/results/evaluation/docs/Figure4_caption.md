@@ -1,0 +1,1 @@
+Figure 4. Spatial and climatic patterns of mean realized aSrz. Basin points are used because no LAI raster background is packaged here. Correlation mean aSrz vs mean LAI = 0.176; vs aridity = -0.221; n = 671 basins.

@@ -1,0 +1,1 @@
+Figure 1. Conceptual Model 6 active-root-zone diagnostic. aSrz is realized active storage, computed as Sa minus the basin-specific analysis-period minimum. theta_cap is a structural upper bound; aSrz_capacity is the realized dynamic range.

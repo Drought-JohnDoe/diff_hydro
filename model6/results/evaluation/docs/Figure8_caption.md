@@ -1,0 +1,1 @@
+Figure 8. Functional identifiability diagnostic for the locked Model 6 branch. Only the current locked model is evaluated here; theta_cap_b and no-prior ablations are configured but were not retrained by this packaging step.

@@ -1,0 +1,1 @@
+Figure 2. Locked Model 6 framework. Unlike the Rohini original, this branch uses a SIMHYD-style runoff response, a single groundwater store, PET-based LAI-scaled ET, and Q-only training; ET, SWE, TWSA, and surface soil moisture are independent validation products.

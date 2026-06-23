@@ -1,0 +1,6 @@
+predictor,feature_column,importance,validation_r2,importance_method
+PET,pet_mean,0.6368932949847748,0.4100840518344522,permutation
+slope,slope_mean,0.15810322467952492,0.4100840518344522,permutation
+P,p_mean,0.1225834946340603,0.4100840518344522,permutation
+LAI,mean_lai,0.10159222308558107,0.4100840518344522,permutation
+sand,sand_frac,0.03995173358769009,0.4100840518344522,permutation

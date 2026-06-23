@@ -1,0 +1,67 @@
+model:
+  name: locked_model6_laieco_full671
+  source_run: model6/results/locked_run
+  source_checkpoint: model6/checkpoints/best_model6_checkpoint.pt
+  source_publication_assets: model6/results/evaluation
+  process_structure:
+    - snow_bucket
+    - interception
+    - active_root_zone_storage
+    - simhyd_partition
+    - one_groundwater_store
+    - gamma_routing
+    - four_component_mixture
+  training_loss: RmseLossComb(alpha=0.25)
+  training_supervision: streamflow_only
+  train_period: [1980-10-01, 1995-10-01]
+  test_period: [1995-10-01, 2010-10-01]
+  evaluation_period: [1995-10-01, 2010-09-30]
+  basin_modes: [32, 455, 671, custom]
+  forcing_inputs: [prcp, tmean, pet, sin_doy, cos_doy, daily_lai]
+  static_attribute_count: 35
+  static_attribute_network:
+    staticFeat: "35 -> 64 -> 64"
+    staticOut: "64 -> 84"
+    lgAttr: "35 -> 4"
+  dynamic_network:
+    lstmdyn_linearIn: "39 -> 64"
+    lstmdyn_lstm: "1 layer, hidden size 64"
+    lstmdyn_linearOut: "64 -> 4"
+    dynHead: "9 -> 32 -> 32 -> 6"
+  static_parameters:
+    - INSC
+    - SUB
+    - CRAK
+    - K
+    - TT
+    - CFMAX_base
+    - CFR
+    - CWH
+    - theta_ab
+    - theta_ak
+    - theta_cap
+    - theta_efmax
+    - theta_wetpoint
+    - route_a
+    - route_b
+    - component_weight_1
+    - component_weight_2
+    - component_weight_3
+    - component_weight_4
+  dynamic_controls:
+    - SQ_t
+    - CFMAX_t
+    - partition_logits
+  publication_metrics:
+    median_NSE: 0.6913885772
+    mean_NSE: 0.4375062445
+    median_KGE: 0.6584972999
+    median_R2: 0.7309911185
+    median_aSrz_capacity_mm: 171.4255828857
+    median_mean_aSrz_mm: 73.1618576050
+    median_weighted_process_closure_residual_mm_day: 0.0001823231
+raw_data_roots:
+  workspace_root: /home/mircore/Desktop/diff_hydro
+  lai_daily_gapfilled: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/NOAA_LAI_CDR_671_DAILY/lai_cdr_daily_basin_671_gapfilled_rf.csv
+  subset455_manifest: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/ECO_INPUTS_2020/notes/minimally_disturbed_subset/subset_full_1988_2007_455.csv
+

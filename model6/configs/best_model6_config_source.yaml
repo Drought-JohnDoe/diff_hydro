@@ -1,0 +1,35 @@
+model_branch_name: Model6Closed_Snow_aSrz_SIMHYD_Simple_LAIEco_full671_target0732_train1
+study_type: Model 6 based Rohini-style diagnostic replication
+locked_run_folder: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_LAIEco_full671_target0732_train1
+locked_checkpoint_source: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_LAIEco_full671_target0732_train1/model_best_state.pt
+locked_checkpoint_copy: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/PUBLICATION_MODEL6_ROHINI_REPLICATION/checkpoints/main_locked_model/model_best_state.pt
+train_period: [1980-10-01, 1995-10-01]
+test_period: [1995-10-01, 2010-10-01]
+evaluation_period: [1995-10-01, 2010-09-30]
+basin_count: 671
+basin_list_path: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_LAIEco_full671_target0732_train1/basin_metadata.csv
+forcing_source: Caravan/CAMELS-US daily forcing as used by the existing Model 6 runner
+lai_source: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/NOAA_LAI_CDR_671_DAILY/lai_cdr_daily_basin_671_gapfilled_rf.csv
+et_products_used: [MODIS MOD16 8-day ET, GLEAM monthly ET]
+swe_source: NSIDC0719 / snow-dominated validation tables already materialized locally
+grace_twsa_source: GRACE/JPL basin-month TWSA validation table
+soil_moisture_source: ESA CCI surface soil moisture basin-month validation table
+et_driver: PET with LAI scalar in the locked main model
+simhyd_active: true
+interception_active: true
+groundwater_store_count: 1
+k_parameterization: static basin parameter in locked branch
+dynamic_daily_controls: [SQ_t, CFMAX_t, component partition logits / component mixture effects]
+theta_cap_formulation: direct static model parameter in [10, 1500] mm
+training_loss: RmseLossComb(alpha=0.25), Q-supervised
+observation_constraints_in_training: runoff only for locked model
+external_validation_only: [ET, SWE, TWSA, ESA CCI surface SM]
+statement: This is Model 6-based Rohini-style diagnostic replication, not the original Rohini model.
+best_metrics:
+  median_NSE: 0.6913885772228241
+  mean_NSE: 0.43750624448038783
+  median_KGE: 0.6584972999366892
+  median_R2: 0.7309911185485979
+  median_aSrz_capacity_mm: 171.4255828857422
+  median_mean_aSrz_mm: 73.16185760498047
+  median_weighted_process_closure_residual_mm_day: 0.0001823231141315773

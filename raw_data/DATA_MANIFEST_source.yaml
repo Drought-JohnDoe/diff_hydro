@@ -1,0 +1,73 @@
+locked_model:
+  run_dir: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_LAIEco_full671_target0732_train1
+  cache: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_LAIEco_full671_target0732_train1_results_package/cache/model_eval_cache.npz
+inputs_and_products:
+  best_metrics:
+    path: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_LAIEco_full671_target0732_train1/best_metrics.json
+    exists: true
+  run_manifest:
+    path: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_LAIEco_full671_target0732_train1/manifest.json
+    exists: true
+  model_cache:
+    path: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_LAIEco_full671_target0732_train1_results_package/cache/model_eval_cache.npz
+    exists: true
+  per_basin_metrics:
+    path: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_LAIEco_full671_target0732_train1/per_basin_metrics_best_so_far.csv
+    exists: true
+  water_balance:
+    path: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_LAIEco_full671_target0732_train1/water_balance_best_so_far.csv
+    exists: true
+  basin_metadata:
+    path: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_LAIEco_full671_target0732_train1/basin_metadata.csv
+    exists: true
+  realized_asrz_timeseries:
+    path: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_LAIEco_full671_target0732_train1/realized_asrz_timeseries.csv
+    exists: true
+  realized_asrz_monthly:
+    path: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_LAIEco_full671_target0732_train1/realized_asrz_monthly.csv
+    exists: true
+  modis_pairs:
+    path: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_LAIEco_full671_target0732_train1/external_validation_tables/mod16_validation_pairs_extended.csv
+    exists: true
+  modis_by_basin:
+    path: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_LAIEco_full671_target0732_train1/external_validation_tables/mod16_validation_by_basin_extended.csv
+    exists: true
+  gleam_pairs:
+    path: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_LAIEco_full671_target0732_train1/external_validation_tables/gleam_validation_pairs_extended.csv
+    exists: true
+  gleam_by_basin:
+    path: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_LAIEco_full671_target0732_train1/external_validation_tables/gleam_validation_by_basin_extended.csv
+    exists: true
+  grace_pairs:
+    path: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_LAIEco_full671_target0732_train1/external_validation_tables/grace_validation_pairs_extended.csv
+    exists: true
+  grace_by_basin:
+    path: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_LAIEco_full671_target0732_train1/external_validation_tables/grace_validation_by_basin_extended.csv
+    exists: true
+  external_summary:
+    path: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_LAIEco_full671_target0732_train1/external_validation_tables/external_validation_product_summary.csv
+    exists: true
+  swe_pairs:
+    path: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_LAIEco_full671_target0732_train1_results_package/tables/swe_validation_pairs.parquet
+    exists: true
+  swe_snow_dominated:
+    path: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_LAIEco_full671_target0732_train1/requested_evaluation_bundle/tables/swe_validation_by_basin_snow_dominated.csv
+    exists: true
+  esa_cci_sm_pairs:
+    path: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_LAIEco_full671_target0732_train1/requested_evaluation_bundle/tables/esa_cci_soil_moisture_validation_pairs.csv
+    exists: true
+  esa_cci_sm_by_basin:
+    path: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_LAIEco_full671_target0732_train1/requested_evaluation_bundle/tables/esa_cci_soil_moisture_validation_by_basin.csv
+    exists: true
+  bfi:
+    path: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_LAIEco_full671_target0732_train1/requested_evaluation_bundle/tables/bfi_vs_simulated_q2q_by_basin.csv
+    exists: true
+  model_best_checkpoint:
+    path: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_LAIEco_full671_target0732_train1/model_best_state.pt
+    exists: true
+  model_epoch1_checkpoint:
+    path: /home/mircore/Desktop/diff_hydro/ECO_HYBRID/Model6Closed_Snow_aSrz_SIMHYD_Simple_LAIEco_full671_target0732_train1/model_Ep1_state.pt
+    exists: true
+notes:
+  - Missing files are recorded by scripts/00_audit_data_availability.py.
+  - Figures depending on missing observations are marked incomplete rather than synthesized.

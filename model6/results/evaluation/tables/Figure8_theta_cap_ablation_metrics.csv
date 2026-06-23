@@ -1,0 +1,8 @@
+experiment,status,theta_cap_b_max_mm
+theta_cap_b_max_600,config_only_not_run,600.0
+theta_cap_b_max_800,config_only_not_run,800.0
+theta_cap_b_max_1000,config_only_not_run,1000.0
+theta_cap_b_max_1200,config_only_not_run,1200.0
+theta_cap_b_max_2000,config_only_not_run,2000.0
+no_prior_direct_nn_theta_cap,config_only_not_run,
+current_locked_direct_theta_cap,evaluated_current_model,1500.0
