@@ -55,11 +55,26 @@ python model6/run_rohini_replication_figures.py
 ## GitHub status
 
 - target repo: `https://github.com/Drought-JohnDoe/diff_hydro`
-- packaging branch recommended: `publication-package-2026-06-23`
+- pushed branch: `publication-package-2026-06-23`
+- remote PR URL: `https://github.com/Drought-JohnDoe/diff_hydro/pull/new/publication-package-2026-06-23`
+
+## Sanity status
+
+- `python model6/evaluate_model6.py`: passed and printed the locked metrics plus external validation summary
+- `conda run -n pytorch python model6/make_figures.py`: passed and rebuilt the figure set under `model6/figures/final/`
+- `conda run -n pytorch python model6/figures/scripts/publication_pipeline.py sanity`: passed
+- note: the current base shell Python has a NumPy 2 / Matplotlib ABI mismatch, so figure regeneration should use the packaged environment or the existing `pytorch` environment
+
+## Archive status
+
+- archive target: `/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/`
+- archive mode: copy-first `rsync -av --progress`, no local deletion
+- progress log: `archive_to_nas_2026-06-23.log`
+- `CLEANUP_MANIFEST.csv` has been generated in the clean repo and refreshed against the NAS target
+- verified copies already include key top-level non-kept content such as `Diagnosis.py`, `HBV11P_ECO_LSTM_CLEAN`, `Model_six_physical`, `code`, `data`, `data_processed`, `external_downloads`, and `results`
 
 ## Remaining manual steps
 
-- finish/archive verification in `CLEANUP_MANIFEST.csv`
+- let the longer NAS copy continue until all intended archive targets show `copy_verified=true` in `CLEANUP_MANIFEST.csv`
 - optionally replace the temporary `LICENSE` with the intended public license
-- review the packaging branch on GitHub before merging to `main`
-
+- review the packaging branch on GitHub and merge when satisfied

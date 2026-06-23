@@ -2,21 +2,21 @@ path,category,reason,archive_target,copy_verified,size_bytes
 /home/mircore/Desktop/diff_hydro/.venv_hydrofabric,ignored_cache_temp,local environment not part of publication package,,false,868421344
 /home/mircore/Desktop/diff_hydro/CAMELS-US.csv,retained_raw_data,raw basin manifest retained locally,,false,33578
 /home/mircore/Desktop/diff_hydro/Camels,retained_raw_data,CAMELS forcing/attributes used by locked Model 6,,false,14896084932
-/home/mircore/Desktop/diff_hydro/Diagnosis.py,moved_to_nas,top-level non-kept workspace content,/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/Diagnosis.py,false,29061
-/home/mircore/Desktop/diff_hydro/HBV11P_ECO_LSTM_CLEAN,moved_to_nas,top-level non-kept workspace content,/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/HBV11P_ECO_LSTM_CLEAN,false,328771281
-/home/mircore/Desktop/diff_hydro/Model_six_physical,moved_to_nas,top-level non-kept workspace content,/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/Model_six_physical,false,556836118
-/home/mircore/Desktop/diff_hydro/REPO_CLEANUP_KEEP_ARCHIVE_2026-06-16.md,moved_to_nas,top-level non-kept workspace content,/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/REPO_CLEANUP_KEEP_ARCHIVE_2026-06-16.md,false,2490
+/home/mircore/Desktop/diff_hydro/Diagnosis.py,moved_to_nas,top-level non-kept workspace content,/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/Diagnosis.py,true,29061
+/home/mircore/Desktop/diff_hydro/HBV11P_ECO_LSTM_CLEAN,moved_to_nas,top-level non-kept workspace content,/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/HBV11P_ECO_LSTM_CLEAN,true,328771281
+/home/mircore/Desktop/diff_hydro/Model_six_physical,moved_to_nas,top-level non-kept workspace content,/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/Model_six_physical,true,556836118
+/home/mircore/Desktop/diff_hydro/REPO_CLEANUP_KEEP_ARCHIVE_2026-06-16.md,moved_to_nas,top-level non-kept workspace content,/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/REPO_CLEANUP_KEEP_ARCHIVE_2026-06-16.md,true,2490
 /home/mircore/Desktop/diff_hydro/__pycache__,ignored_cache_temp,cache/temp,,false,111092
 /home/mircore/Desktop/diff_hydro/cache,ignored_cache_temp,cache/temp,,false,213266
-/home/mircore/Desktop/diff_hydro/cleanup_archive_log_2026-06-16.txt,moved_to_nas,top-level non-kept workspace content,/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/cleanup_archive_log_2026-06-16.txt,false,19185
-/home/mircore/Desktop/diff_hydro/code,moved_to_nas,top-level non-kept workspace content,/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/code,false,5378540
-/home/mircore/Desktop/diff_hydro/credentials,moved_to_nas,top-level non-kept workspace content,/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/credentials,false,1034
-/home/mircore/Desktop/diff_hydro/data,moved_to_nas,top-level non-kept workspace content,/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/data,false,504774330
-/home/mircore/Desktop/diff_hydro/data_processed,moved_to_nas,top-level non-kept workspace content,/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/data_processed,false,45029441
-/home/mircore/Desktop/diff_hydro/downloads,moved_to_nas,top-level non-kept workspace content,/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/downloads,false,0
-/home/mircore/Desktop/diff_hydro/external_downloads,moved_to_nas,top-level non-kept workspace content,/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/external_downloads,false,262303072
+/home/mircore/Desktop/diff_hydro/cleanup_archive_log_2026-06-16.txt,moved_to_nas,top-level non-kept workspace content,/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/cleanup_archive_log_2026-06-16.txt,true,19185
+/home/mircore/Desktop/diff_hydro/code,moved_to_nas,top-level non-kept workspace content,/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/code,true,5378540
+/home/mircore/Desktop/diff_hydro/credentials,moved_to_nas,top-level non-kept workspace content,/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/credentials,true,1034
+/home/mircore/Desktop/diff_hydro/data,moved_to_nas,top-level non-kept workspace content,/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/data,true,504774330
+/home/mircore/Desktop/diff_hydro/data_processed,moved_to_nas,top-level non-kept workspace content,/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/data_processed,true,45029441
+/home/mircore/Desktop/diff_hydro/downloads,moved_to_nas,top-level non-kept workspace content,/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/downloads,true,0
+/home/mircore/Desktop/diff_hydro/external_downloads,moved_to_nas,top-level non-kept workspace content,/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/external_downloads,true,262303072
 /home/mircore/Desktop/diff_hydro/global_data,retained_raw_data,Caravan and related retained raw/global support data used by locked branch,,false,123509368951
-/home/mircore/Desktop/diff_hydro/results,moved_to_nas,top-level non-kept workspace content,/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/results,false,13188905147
+/home/mircore/Desktop/diff_hydro/results,moved_to_nas,top-level non-kept workspace content,/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/results,true,13188905147
 /home/mircore/Desktop/diff_hydro/rohini_ESSS.pdf,moved_to_nas,top-level non-kept workspace content,/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/rohini_ESSS.pdf,false,2137918
 /home/mircore/Desktop/diff_hydro/scripts,moved_to_nas,top-level non-kept workspace content,/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/scripts,false,178062
 /home/mircore/Desktop/diff_hydro/tmp_model6_debug,ignored_cache_temp,temporary debugging outputs,,false,358118
@@ -151,4 +151,4 @@ path,category,reason,archive_target,copy_verified,size_bytes
 /home/mircore/Desktop/diff_hydro/outputs/tmp_diag_train_q.csv,moved_to_nas,outputs content not retained locally in clean package,/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/outputs/tmp_diag_train_q.csv,false,1233891
 /home/mircore/Desktop/diff_hydro/outputs/vi_hbv_50step_eval,moved_to_nas,outputs content not retained locally in clean package,/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/outputs/vi_hbv_50step_eval,false,41020981
 /home/mircore/Desktop/diff_hydro/outputs/vi_hbv_8basins,moved_to_nas,outputs content not retained locally in clean package,/mnt/nas/home_aman/Projects/WRR_repo_archive_2026-06-23/outputs/vi_hbv_8basins,false,3144263
-/home/mircore/Desktop/diff_hydro_publication,kept,new clean publication repo built from locked Model 6 assets,,false,1067441046
+/home/mircore/Desktop/diff_hydro_publication,kept,new clean publication repo built from locked Model 6 assets,,false,1091978126
